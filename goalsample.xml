@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<goalkeeper>  <!-- root element containing all goal entries -->
+	<goal>
+		<name>Create Goal XML File Sample</name>
+		<priority>100</priority>     <!-- range is 0 to 100 -->
+		<completion>50</completion>  <!-- range is 0 to 100 -->
+		<unitcost>0.01</unitcost>    <!-- hours per completion unit -->
+	</goal>
+</goalkeeper>
