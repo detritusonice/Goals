@@ -1,2 +1,7 @@
 *.o
-
+obj/*.o
+tests/obj/*.o
+*~
+include/*~
+tests/*~
+core
