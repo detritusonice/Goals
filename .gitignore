@@ -5,3 +5,4 @@ tests/obj/*.o
 include/*~
 tests/*~
 core
+goals
