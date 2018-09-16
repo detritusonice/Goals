@@ -11,7 +11,7 @@ LIBS=
 TESTLIBS=-lgtest -lpthread
 
 #dependencies
-_DEPS=
+_DEPS= goals.h
 DEPS= $(patsubst %,$(IDIR)/%, $(_DEPS))
 
 #main executable file is declared separately to avoid collision of main()s
@@ -23,7 +23,7 @@ OBJ= $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 #test object files have their own folder hierarchy
 _TESTOBJ=tests.o
-TESTOBJ = $(patsubst %,$(TDIR)/%,$(_TESTOBJ))
+TESTOBJ = $(patsubst %,$(TDIR)/$(ODIR)/%,$(_TESTOBJ))
 
 #make object files
 $(ODIR)/%.o: %.cpp $(DEPS)
