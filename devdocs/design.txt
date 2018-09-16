@@ -1,0 +1,34 @@
+Goals design document
+created on 16/sept/2018
+
+application behavior:
+	character-based, menu driven application prototype
+	looping a display, input, process cycle
+	handling Goal object records, stored in an XML file and memory
+	offering insertion, deletion, modification, and sorting based on attrib
+
+Behaviour stages:
+	Display:
+		a) any output resulting from the immediately previous user input
+		b) menu or submenu line below aforesaid output.
+	Input:
+		accepting character based commands or data according to the 
+		current state of the application regarding user choices 
+		and actions. 
+		Error checking permeates all user input except individual record entries.
+	Process:
+		State machine state changes may be issued followng user input
+		Data handling will be issued when user has completed an appropriate
+			command sequence for insertion, deletion, modification
+			or selection of sorting criterion.
+		File operations will follow a "save" user command, or app startup and shutdown.
+	Permanend Data Storage:
+		An XML file will initially be used to store goals and user selected options
+			such as sorting criterion.
+Key components:
+	XML parser
+	XML recorder
+	Memory storage and indexing
+	line editor
+	screen display system.
+	

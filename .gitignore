@@ -1,9 +1,5 @@
-*.o
-obj/*.o
-tests/obj/*.o
-*~
-include/*~
-tests/*~
+**/*.o
+**/*~
 core
 goals
 testgoals

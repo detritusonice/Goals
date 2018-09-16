@@ -1,0 +1,30 @@
+Goals Iteration A description file
+
+Iteration starting Mon 17/Sept/2018
+
+Target: A text based console app that will:
+		a.Read an XML file containing Goal records consisting of:
+			i. a name text field of at most 80 chars
+			ii.a priority numerical field ranging from 0(Disabled) to 100(Life or death-urgent)
+			iii.a numerical field describing the completion percentage of the goal [0,100] range
+			iv. a floating point numerical field, describing the temporal cost in hours of increasing
+				goal completion percentage by one percentage unit, assuming linear progression.
+		
+		B.Display the contents of the file on-screen in an well-oredered manner per goal entry, keeping 
+			the original order of the records in the file.
+		
+		C.Display a menu offering the option to leave the application by Saving or Not to the file.
+
+		D.According to the user's choice, Save the file. In case the user's choice was invalid, goto B.
+
+		E.Exit gracefully. In case of a Save, a copy of the previous file must be kept in a .bak file.
+
+		F.100% tests passed, tests fully covering file existence, read correctness, creation, backup creation
+			and overwriting, screen outuput, menu user input, Goal objects, containers of Goal records
+			correct exception behaviour.
+
+Iteration Duration: 2 weeks of two hours per day.
+
+Iteration A initiation is tagged Iter_A_Start
+Iteration A end wil be tagged Iter_A_End
+
