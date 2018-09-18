@@ -11,5 +11,8 @@
 
 using namespace std;
 
+std::ostream& operator <<( std::ostream& out, const Goal &goal) {
+	return goal.print(out);
+}
 //implement classes and main fuction calls
 
