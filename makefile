@@ -18,7 +18,7 @@ DEPS= $(patsubst %,$(IDIR)/%, $(_DEPS))
 MAIN=$(ODIR)/main.o
 
 #object files are placed in separate directory
-_OBJ=goals.o
+_OBJ=goals.o parser.o
 OBJ= $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 #test object files have their own folder hierarchy

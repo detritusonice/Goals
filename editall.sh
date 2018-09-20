@@ -1,1 +1,1 @@
-vim "+set number" main.cpp goals.cpp include/goals.h tests/tests.cpp
+vim "+set number" main.cpp goals.cpp parser.cpp include/goals.h tests/tests.cpp
