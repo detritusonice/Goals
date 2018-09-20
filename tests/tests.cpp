@@ -43,6 +43,56 @@ TEST(goal,print) {
 	ASSERT_EQ(str, out.str()); //compare expected to the ostrstreams string
 }
 
+//test XMLParser function getHeader
+TEST( XMLParser, getHeader ) {
+	XMLParser parser{"goalsample.xml"};
+	std::string header=parser.getHeader();
+	ASSERT_EQ(header,"xml version=\"1.0\" encoding=\"UTF-8\"");
+}
+//test XMLParser function getLabel
+TEST( XMLParser, getLabel ) {
+	XMLParser parser{"goalsample.xml"};
+	parser.getHeader();// ignoring header, already tested
+	std::string root=parser.getLabel();//should ignore leading whitespace
+	ASSERT_EQ(root,"goalkeeper");
+}
+//test XMLParser function absorbComment implicitly. a comment exists between <goalkeeper> and <goal>
+TEST( XMLParser, absorbComment_implicit ) {
+	XMLParser parser{"goalsample.xml"};
+	parser.getHeader();// ignoring header, already tested
+	parser.getLabel();// ditto.   between <goalkeeper> root element and first <goal> node
+			  // there is an endline <!-- ... --> coment.
+	std::string label=parser.getLabel(); // should have ignored the comment and leading w/space
+	ASSERT_EQ(label,"goal");
+}
+// test creation of emplty container
+TEST( GoalContainer, createEmpty ) {
+	GoalContainer gc;
+	ASSERT_EQ(gc.size(),0);
+}
+// test reading a single goal entry
+TEST( GoalContainer, readGoal ) {
+	GoalContainer gc;
+	XMLParser parser{"goalsample.xml"};
+	parser.getHeader();
+	parser.getLabel();//root element, tested
+	std::string label=parser.getLabel();//"goal"
+	Goal goal=gc.readGoal(parser,label);//should fill in the fields
+	std::ostringstream out;
+	goal.print(out);//dump to string
+	std::string str("Sample goal, \t100, \t50, \t0.01\n");
+	ASSERT_EQ(out.str(),str);
+}
+
+//test importing goals from xml file
+TEST( GoalContainer, openfile ) {
+	GoalContainer gc;
+	gc.loadFile("goalsample.xml");//read records from the sample xml file
+	ASSERT_EQ(gc.size(),1);
+	ostringstream out;	// create a stringstream to hold the pring output
+	gc.printAll(out);	// invoke printall to dump output to the stream
+	ASSERT_EQ(out.str(),"Sample goal, \t100, \t50, \t0.01\n");
+}
 int main(int argc, char **argv) {
 	::testing::InitGoogleTest(&argc, argv);
 	return RUN_ALL_TESTS();

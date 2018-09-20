@@ -1,0 +1,11 @@
+IT = implement and test to 100%
+
+IT XMLParser class
+	IT getHeader()
+	IT getLabel()
+	IT readGoal()
+
+IT Goal comparison functions
+
+IT GoalContainer readFile
+
