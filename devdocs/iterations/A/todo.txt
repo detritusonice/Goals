@@ -1,11 +1,21 @@
 IT = implement and test to 100%
 
-IT XMLParser class
-	IT getHeader()
-	IT getLabel()
-	IT readGoal()
+IT XMLParser class 	DONE
+	IT getHeader()	DONE
+	IT getLabel()	DONE
+	IT readGoal()	, moved it to GoalContainer, DONE
+
+IT GoalContainer readFile	DONE
 
 IT Goal comparison functions
+IT Select sorting criterion
+IT Sort output of goal entries based on chosen criterion
+IT Output in an ordered manner.
+IT Consider outputting more entries than the lines of screen
+IT Action menu
+	IT Exit option
+	IT Sort option
+	IT Sort submenu
+	IT Save option
 
-IT GoalContainer readFile
 

@@ -1,0 +1,53 @@
+commit f729369a20583f72c4a4837df09eaa8872ee93b8
+Author: Thanasis Karpetis <tkarpetis@gmail.com>
+Date:   Thu Sep 20 20:05:39 2018 +0300
+
+    moved parser implementation to parser.cpp, scripts updated, all tests pass
+
+commit 8d11f8e9ee37c1e8e9f18e5b808f9d7ed7fda26a
+Author: Thanasis Karpetis <tkarpetis@gmail.com>
+Date:   Thu Sep 20 19:55:35 2018 +0300
+
+    XMLParser opens and loads Goal entries, GoalContainer opens and loads vector of goals from an xml file using the parser.
+
+commit 5b87010eedc38a18453479d3bf1cd0ef10e9c0db
+Author: Thanasis Karpetis <tkarpetis@gmail.com>
+Date:   Tue Sep 18 17:01:49 2018 +0300
+
+    goal object creation and print pass tests
+
+commit 4d316b3941f6ec3e01368df86ed67b7325711080
+Author: Thanasis Karpetis <tkarpetis@gmail.com>
+Date:   Sun Sep 16 22:47:09 2018 +0300
+
+    added devdocs design document and started Iteration A. updated .gitignore to accomodate nested folders
+
+commit 05021e9cb072dd59a48a9b31ac298d631859e218
+Author: Thanasis Karpetis <tkarpetis@gmail.com>
+Date:   Sun Sep 16 21:19:24 2018 +0300
+
+    corrected makefile, now both application and tests build correctly. Added skeleton to tests/tests.cpp"
+
+commit d0ed49ea5381343c7dd3ef584844147d2c80d492
+Author: Thanasis Karpetis <tkarpetis@gmail.com>
+Date:   Sun Sep 16 16:39:48 2018 +0300
+
+    added entry in .gitignore for executable file, added copyright notice in all source files
+
+commit c5d0ee68237bcef7cca129557a58a2a2448103b4
+Author: Thanasis Karpetis <tkarpetis@gmail.com>
+Date:   Fri Sep 14 20:43:58 2018 +0300
+
+    modified .gitignore to adapt it to new directory structure
+
+commit 2d9d319bbfba2ce8d1576c7412ce2e82e4bc356a
+Author: Thanasis Karpetis <tkarpetis@gmail.com>
+Date:   Fri Sep 14 20:40:36 2018 +0300
+
+    created makefile and directory structure with mock files for application and unit tests
+
+commit 3409fc49a3f665dd525c0544c97d2e4c58385eec
+Author: Thanasis Karpetis <tkarpetis@gmail.com>
+Date:   Fri Sep 14 19:46:36 2018 +0300
+
+    initial commit with basic gitignore
