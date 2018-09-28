@@ -28,6 +28,7 @@
 #include <sstream>
 #include <string>
 #include "goals.h"
+#include "statemachine.h"
 
 using namespace std;// for brevity
 // template test
@@ -106,6 +107,85 @@ TEST( GoalContainer, openfile ) {
 	gc.printAll(out);	// invoke printall to dump output to the stream
 	ASSERT_EQ(out.str(),"Sample goal, \t100, \t50, \t0.01\n");
 }
+//////////////////////////////////////////////////////////////////////////////////////
+//state machine testing classes
+//
+
+class StateMachineTester {
+	StateMachine *theMachine;
+public:
+	StateMachineTester( StateMachine* mac ):theMachine{mac} {
+		if (mac==nullptr)
+			throw(std::runtime_error("machine passed was null"));
+	}
+	~StateMachineTester() {
+		theMachine = nullptr;// do not destroy by accident...
+	}
+	State* getCurrentState() {
+		return theMachine->state;
+	}
+	std::vector<State*>* getStateVector() {
+		return &theMachine->sv;
+	}
+	STATE getCurrentStateID() {
+		return (theMachine->state==nullptr?
+				STATE_INVALID:theMachine->state->getStateID());
+	} 
+	GoalContainer* getGoalContainer() {
+		return &theMachine->gc;
+	}
+	void setState( STATE next ) { 
+		theMachine->setState(next);
+	}
+	void popState() { 
+		theMachine->popState();
+	}
+};
+
+TEST( StateMachine, StateMachineTester ) {
+	StateMachine machine;
+	StateMachineTester tester{&machine};
+	ASSERT_EQ(tester.getStateVector()->size(),1);//should provide access to private members
+}
+
+TEST( StateMachine, create ) {
+	StateMachine machine;
+	StateMachineTester tester{&machine};
+	
+	ASSERT_EQ(tester.getStateVector()->size(),1);
+	ASSERT_EQ(tester.getCurrentStateID(),STATE_MAINMENU);
+}
+
+TEST( StateMachine, pop) {
+	StateMachine machine;
+	StateMachineTester tester{&machine};
+	// already tested initial conditions
+	tester.popState();
+	ASSERT_EQ(tester.getStateVector()->size(),0);
+	ASSERT_EQ(tester.getCurrentStateID(),STATE_EXITMENU);
+	try{
+		tester.popState();//this will even delete the current state
+		ASSERT_EQ(tester.getStateVector()->size(),0); //still zero, no exception thrown
+		ASSERT_EQ(tester.getCurrentStateID(), STATE_INVALID);//returned when state is nullptr
+	} catch(...) {
+		ASSERT_TRUE(false);	// no exception should have been thrown
+	}
+}
+
+TEST( StateMachine, autoPop ) {
+	StateMachine machine;
+	StateMachineTester tester{&machine};
+	
+	tester.setState( STATE_EXITMENU );// this is the first in the stack. should pop
+	ASSERT_EQ( tester.getStateVector()->size(), 0);// popped
+	ASSERT_EQ( tester.getCurrentStateID(), STATE_EXITMENU );//correct current state
+}
+/*
+TEST( StateMachine, mainMenu ) {
+	StateMachine stm;
+	
+*/
+
 int main(int argc, char **argv) {
 	::testing::InitGoogleTest(&argc, argv);
 	return RUN_ALL_TESTS();

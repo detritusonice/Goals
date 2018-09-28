@@ -6,7 +6,7 @@ ODIR=obj
 TDIR=tests
 
 CFLAGS=-std=c++11 -I$(IDIR)
-TESTFLAGS=-pthread -no-pie
+TESTFLAGS=-D TESTING_ACTIVE -pthread -no-pie
 LIBS=
 TESTLIBS=-lgtest -lpthread
 
@@ -29,9 +29,9 @@ TESTOBJ = $(patsubst %,$(TDIR)/$(ODIR)/%,$(_TESTOBJ))
 $(ODIR)/%.o: %.cpp $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
-#make test files:
+#make test files (some classes need TESTING_ACTIVE defined to allow testing):
 $(TDIR)/$(ODIR)/%.o: $(TDIR)/%.cpp $(DEPS)
-	$(CC) -c -o $@ $< $(CFLAGS)
+	$(CC) -c -o $@ $< $(CFLAGS) $(TESTFLAGS)
 
 #make the application executable
 goals: $(OBJ) $(MAIN)
