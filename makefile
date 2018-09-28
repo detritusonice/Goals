@@ -11,14 +11,14 @@ LIBS=
 TESTLIBS=-lgtest -lpthread
 
 #dependencies
-_DEPS= goals.h
+_DEPS= goals.h statemachine.h
 DEPS= $(patsubst %,$(IDIR)/%, $(_DEPS))
 
 #main executable file is declared separately to avoid collision of main()s
 MAIN=$(ODIR)/main.o
 
 #object files are placed in separate directory
-_OBJ=goals.o parser.o
+_OBJ=goals.o parser.o statemachine.o
 OBJ= $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 #test object files have their own folder hierarchy
