@@ -26,6 +26,7 @@
 #include "goals.h"
 #include "statemachine.h"
 
+
 int main( int argc, char** argv) {
 	try{
 		StateMachine stm;

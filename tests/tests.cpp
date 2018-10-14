@@ -97,6 +97,12 @@ TEST( GoalContainer, readGoal ) {
 	std::string str("Sample goal, \t100, \t50, \t0.01\n");
 	ASSERT_EQ(out.str(),str);
 }
+//test trying to read from a nonexistent or unreadable file
+TEST( GoalContainer, readNonOpenableFile ) {
+	GoalContainer gc;
+	gc.loadFile("NONEXISTENT");
+	ASSERT_EQ(gc.size(),0);
+}
 
 //test importing goals from xml file
 TEST( GoalContainer, openfile ) {
@@ -131,9 +137,6 @@ public:
 		return (theMachine->state==nullptr?
 				STATE_INVALID:theMachine->state->getStateID());
 	} 
-	GoalContainer* getGoalContainer() {
-		return &theMachine->gc;
-	}
 	void setState( STATE next ) { 
 		theMachine->setState(next);
 	}
@@ -176,7 +179,7 @@ TEST( StateMachine, autoPop ) {
 	StateMachine machine;
 	StateMachineTester tester{&machine};
 	
-	tester.setState( STATE_EXITMENU );// this is the first in the stack. should pop
+	tester.setState( STATE_EXITMENU );// this is the previous in the stack. should pop
 	ASSERT_EQ( tester.getStateVector()->size(), 0);// popped
 	ASSERT_EQ( tester.getCurrentStateID(), STATE_EXITMENU );//correct current state
 }

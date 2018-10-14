@@ -28,6 +28,8 @@
 
 #include "goals.h"
 
+extern GoalContainer gc;// defined in statemachine.cpp
+
 enum STATE {
 	STATE_EXIT=0,
 	STATE_EXITMENU,
@@ -47,6 +49,9 @@ public:
 	virtual void input()=0;
 	virtual void act() {}
 	STATE getStateID() {return stateID;}
+#ifdef TESTING_ACTIVE
+	friend class StateTester;
+#endif //TESTING_ACTIVE
 };
 
 
@@ -58,9 +63,6 @@ class ExitMenu : public State {
 	void display();
 	void input();
 	void act();
-#ifdef TESTING_ACTIVE	
-	friend class StateTester;
-#endif //TESTING ACTIVE
 };
 
 class MainMenu : public State {
@@ -71,15 +73,11 @@ class MainMenu : public State {
 	void display();
 	void input();
 	void act();
-#ifdef TESTING_ACTIVE	
-	friend class StateTester;
-#endif //TESTING ACTIVE
 };
 
 class StateMachine {
 	std::vector<State*> sv; 		// acts as a state stack
 	State* state; 				// the current state the machine is in
-	GoalContainer gc; 			// containing the Goal records
 	static STATE stateID;
 
 	void setState( STATE newStateID ); 	//push current state, activate new state
@@ -101,14 +99,14 @@ class StateMachine {
 			delete p; 
 			}
 		}
-		
-	static void setNextState( STATE newID ) {
+	// flags the next state for the machine to transit to		
+	static void setNextStateID( STATE newID ) {
 		stateID=newID;
 		}
 	
 	int run(); // main loop.
 
-
+	friend class State; // in doubt: who should own a goal container? how is access to it given?
 #ifdef TESTING_ACTIVE	
 	friend class StateMachineTester;
 #endif //TESTING ACTIVE

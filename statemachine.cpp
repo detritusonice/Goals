@@ -26,6 +26,8 @@
 
 #include "statemachine.h"
 
+GoalContainer gc;// to ease access from all states, defined here to enable testing
+
 STATE StateMachine::stateID=STATE_EXIT;
 
 void ExitMenu::display() { 
@@ -48,7 +50,7 @@ void ExitMenu::input() {
 void ExitMenu::act() {
 	std::cout<<(saveChanges?"Saving changes...\n":"Ignoring changes...\n");
 	//perform the saving...
-	StateMachine::setNextState(STATE_EXIT);// signals machine to return.
+	StateMachine::setNextStateID(STATE_EXIT);// signals machine to return.
 }
 
 
@@ -63,8 +65,8 @@ void MainMenu::input() {
 void MainMenu::act() { 
 	switch(c) {
 		case 'E':
-		case 'e': StateMachine::setNextState(STATE_EXITMENU);break;
-		case 't': StateMachine::setNextState(STATE_EXIT);break;
+		case 'e': StateMachine::setNextStateID(STATE_EXITMENU);break;
+		case 't': StateMachine::setNextStateID(STATE_EXIT);break;
 		case 'x': throw(std::runtime_error{"YOU TERMINATED ME!!!"});break;
 		default: break;
 	}
@@ -111,6 +113,13 @@ void StateMachine::popState() {
 int StateMachine::run() {
 	bool done=false;
 
+	try {
+		gc.loadFile("goals.xml");
+	} catch( std::exception &e) {
+		std::cerr<<" exception caught while reading XML file:"<<e.what()<<"\n\n";
+		return 1; //should differentiate the types of exceptions. a nonexistent file should be allowed
+	}
+
 	while (!done) {
 		if (stateID==STATE_EXIT || state==nullptr ) break;
 		
@@ -122,26 +131,3 @@ int StateMachine::run() {
 	}
 	return 0;
 }
-/*
-int statemachine::run() {
-	// initialize program
-	// open files
-	// read goals
-	try {
-		gc.loadfile("goals.xml");
-	} catch (std::exception &e) {
-		std::cerr<<"exception caught while reading xml file:"<<e.what()<<"\n\n";
-		return 1;
-	}
-	bool done=false;
-	// state machine loop
-	while ( !done ) {
-		// display
-		gc.printall(std::cout);// dump all entries to standard output
-		// input
-		done=true;
-	// action
-	} // end of loop
-	// save or not (according to user instructions)
-}
-*/
