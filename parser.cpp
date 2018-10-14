@@ -25,6 +25,7 @@
 
 #include <algorithm>
 #include <string>
+#include <iomanip>
 #include "goals.h"
 
 // read the XML file's header and return it withouth the <? and ?> sequences
@@ -132,3 +133,39 @@ std::string XMLParser::getLeafData() {
 	return data;
 }
 		  			  
+//writes header string
+void XMLWriter::writeHeader() {
+	out<<"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+}
+
+//writes openlabel, push label in label stack, increment indent level, optionally start new line
+void XMLWriter::openLabel(const std::string& label, bool newline) {
+	indent();
+	out<<'<'<<label<<'>';
+	labelStack.emplace_back(label,newline); // will store node elements having a newline, leafs without
+	if (newline)
+		out<<'\n';
+	indentLevel++;
+}
+
+//write closelabel, pop label from label stack,reduce indent level, start a new line
+void XMLWriter::closeLabel() {
+	if (labelStack.empty())
+		throw ( std::runtime_error("Request to close an unopened label"));
+	indentLevel--;
+	if (labelStack.back().second) // a node element
+		indent();
+	out<<"</"<<labelStack.back().first<<">\n";
+	labelStack.pop_back();
+}
+
+//write a whole goal entry
+void XMLWriter::writeGoal( const Goal& goal) {
+	openLabel("goal",true);
+	openLabel("name"); out<<goal.name; closeLabel();
+	openLabel("priority"); out<<goal.priority; closeLabel();
+	openLabel("completion"); out<<goal.completion; closeLabel();
+	openLabel("unitcost"); out<<std::setprecision(2); out<<goal.unitcost; closeLabel();
+	closeLabel();// goal
+}
+

@@ -31,10 +31,15 @@ GoalContainer gc;// to ease access from all states, defined here to enable testi
 STATE StateMachine::stateID=STATE_EXIT;
 
 void ExitMenu::display() { 
-	std::cout<<"\nsave changes (yes/no):";
+	if (gc.isModified())
+		std::cout<<"\nsave changes (yes/no):";
+	else
+		std::cout<<"No changes made to the goal records.\n";
 }
 
 void ExitMenu::input() { 
+	if (!gc.isModified())	// no changes to the goal data
+		return;
 	char c;
 	std::cin>>c;		// Using cin for brevity instead of std::cin.get()
 	if (c=='y' || c=='y') {
@@ -48,8 +53,18 @@ void ExitMenu::input() {
 }
 
 void ExitMenu::act() {
-	std::cout<<(saveChanges?"Saving changes...\n":"Ignoring changes...\n");
-	//perform the saving...
+	if (gc.isModified()) {
+		if (saveChanges) {
+			std::cout<<"Saving changes...";
+			gc.saveFile();
+			std::cout<<"done.\n";
+		}
+		else {
+			std::cout<<"Ignoring changes.\n";
+		}
+	}
+	std::cout<<"Goodbye.\n";
+
 	StateMachine::setNextStateID(STATE_EXIT);// signals machine to return.
 }
 

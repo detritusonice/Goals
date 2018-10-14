@@ -11,6 +11,7 @@ IT Output in an ordered manner.
 IT Action menu
 	IT Exit option
 	IT Save option
+	I  GoalTester class to enable testing the load/save and edit features
 * = iteration B
 *	IT Sort option
 *	IT Sort submenu
@@ -18,5 +19,8 @@ IT Action menu
 *IT Select sorting criterion
 *IT Sort output of goal entries based on chosen criterion
 *IT Consider outputting more entries than the lines of screen
+*IT StateMachine status (for storing sorting preferences)
+*IT StateMachine xml settings file
+*IT GoalContainer status (to check if save is necessary)
 
 

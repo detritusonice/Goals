@@ -38,6 +38,7 @@ enum STATE {
 	STATE_INVALID
 };
 
+//=============================================================================
 // Base class for states of the machine
 class State {
 protected:
@@ -54,6 +55,7 @@ public:
 #endif //TESTING_ACTIVE
 };
 
+//=============================================================================
 
 class ExitMenu : public State {
 	bool saveChanges;
@@ -65,6 +67,8 @@ class ExitMenu : public State {
 	void act();
 };
 
+//=============================================================================
+
 class MainMenu : public State {
 	bool changed;
 	char c;
@@ -75,17 +79,21 @@ class MainMenu : public State {
 	void act();
 };
 
+//=============================================================================
+
 class StateMachine {
+	bool changed;				// changes made to preferences
 	std::vector<State*> sv; 		// acts as a state stack
 	State* state; 				// the current state the machine is in
 	static STATE stateID;
 
 	void setState( STATE newStateID ); 	//push current state, activate new state
 	void popState(); 			// return to previous state
+
  public:
 		// default state is stack with an ExitMenu and MainMenu as current 
 		
-	StateMachine():state{ nullptr }{
+	StateMachine():changed{false},state{ nullptr }{
 		state=new ExitMenu{} ; 		// to be pushed by setState 
 		setState(STATE_MAINMENU);	// enter the main menu
 	}

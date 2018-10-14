@@ -41,6 +41,8 @@ std::ostream& GoalContainer::printAll(std::ostream& strm) const {
 // side effect: vector of goals is wiped clean to contain only the new entries.
 int GoalContainer::loadFile( const std::string &name) {
 
+	v.clear();
+	filename= name;//store the filename of the container's records for saving
 	std::set<Goal> gs;
 
 	try {
@@ -63,9 +65,27 @@ int GoalContainer::loadFile( const std::string &name) {
 	} catch(std::exception &e){
 		cerr<<"exception caught: "<<e.what()<<'\n';
 	}
-	v.clear();
 	std::copy(gs.begin(),gs.end(),std::back_inserter(v));			
 	return v.size();
+}
+
+bool GoalContainer::saveFile() {
+	if ( isModified() ) {
+		std::cout<<"saving to "<<filename<<"...";
+		//create backup
+		try{
+			XMLWriter writer{filename};
+			writer.writeHeader();
+			writer.openLabel("goalkeeper",true); //root element
+			for (auto& goal:v)
+				writer.writeGoal(goal);
+			writer.closeLabel();
+		} catch (std::exception& e) {
+			cout<<"Exception caught while saving file:"<<e.what()<<"\n";
+		}
+
+	}
+	return true;
 }
 
 // read a goal record, consisting of leaf records, discarding comment entries

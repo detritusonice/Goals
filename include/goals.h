@@ -56,9 +56,11 @@ public://just temporary, until gettors and settors are in place
 //========= GoalContainer ===================================
 
 class GoalContainer {
+	bool modified;
+	std::string filename;
 	std::vector<Goal> v;
  public:
-	GoalContainer(){}
+	GoalContainer():modified{false} {}
 
 	std::ostream& printAll( std::ostream &strm) const;
 
@@ -66,8 +68,16 @@ class GoalContainer {
 		return v.size();
 	}
 
+	bool isModified() {
+		return modified;
+	}
+
 	int loadFile( const std::string &name );
+	bool saveFile();
 	Goal readGoal(XMLParser &p, std::string &label);
+#ifdef TESTING_ACTIVE
+	friend class GoalTester;
+#endif //TESTING_ACTIVE
 };
 
 //======== XMLParser =======================================
@@ -88,6 +98,32 @@ class XMLParser {
 
 };
 
+//======== XMLWriter ========================================
+
+class XMLWriter {
+	mutable std::ofstream out;
+	int indentLevel;
+	std::vector<std::pair<std::string,bool>> labelStack; // keeps open label hierarchy 
+
+	//write leading tabs
+	bool indent() {
+		for (int i=0;i<indentLevel;i++)
+			out<<'\t';
+	}
+ public:
+	XMLWriter( const std::string& name ):out{name},indentLevel{0} {
+		labelStack.clear();
+	} 
+	//write header string
+	void writeHeader();
+	//write openlabel, push label in label stack, increment indent level, optionally start new line
+	void openLabel(const std::string& label, bool newline=false);
+	//write closelabel, pop label from label stack,reduce indent level, start a new line
+	void closeLabel();
+	//write a whole goal entry
+	void writeGoal( const Goal& goal);
+};
+	
 std::ostream& operator <<( std::ostream& out, const Goal& goal);
 
 #endif
