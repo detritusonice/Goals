@@ -5,4 +5,5 @@ core
 goals
 testgoals
 goals.xml
+goalSaved.xml
 *.ori

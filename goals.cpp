@@ -82,6 +82,7 @@ bool GoalContainer::saveFile() {
 			writer.closeLabel();
 		} catch (std::exception& e) {
 			cout<<"Exception caught while saving file:"<<e.what()<<"\n";
+			return false;
 		}
 
 	}

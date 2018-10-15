@@ -113,7 +113,64 @@ TEST( GoalContainer, openfile ) {
 	gc.printAll(out);	// invoke printall to dump output to the stream
 	ASSERT_EQ(out.str(),"Sample goal, \t100, \t50, \t0.01\n");
 }
-//////////////////////////////////////////////////////////////////////////////////////
+//=================================================================================
+//goal container tester class
+
+class GoalTester {
+	GoalContainer* gc;
+ public:
+	GoalTester( GoalContainer* container ): gc{container} {
+		if ( container == nullptr )
+			throw( std::runtime_error("goal container passed to goaltester was null"));
+	}
+	~GoalTester() {
+		gc=nullptr;
+	}
+
+	bool getModified() {return gc->modified;}
+
+	void setModified( bool val) { gc->modified=val;}
+
+	std::string getFilename() { return gc->filename;}
+
+	void setFilename( const std::string& newname ) { gc->filename=newname;}//no error checking
+
+	std::vector<Goal>* getGoalVector() { return &gc->v;}
+
+	bool isModified() { return gc->isModified();}
+	size_t getSize() {return gc->size();}
+	int loadFile (const std::string &name) { return gc->loadFile(name);}
+	bool saveFile() { return gc->saveFile();}
+};
+//----------------------------------------------------------------------------------
+
+TEST( GoalContainer, saveFile ) {
+	GoalContainer gc;
+	GoalTester tester(&gc);
+
+	tester.loadFile("goalsample.xml");
+	ASSERT_EQ(tester.getFilename(),"goalsample.xml");
+	tester.setFilename("goalSaved.xml");	
+	tester.setModified(true);
+	ASSERT_EQ(tester.saveFile(),true);
+
+	GoalContainer gc2;
+	GoalTester tester2(&gc2);
+	tester2.loadFile("goalSaved.xml");
+
+	vector<Goal> *v1, *v2;
+	v1=tester.getGoalVector();
+	v2=tester2.getGoalVector();
+
+	ASSERT_EQ(v1->size(),v2->size());
+
+	for (int i=0;i<v1->size();i++)
+		ASSERT_EQ((*v1)[i], (*v2)[i]);
+	v1=nullptr;
+	v2=nullptr;
+
+}
+//=================================================================================
 //state machine testing classes
 //
 
@@ -183,11 +240,6 @@ TEST( StateMachine, autoPop ) {
 	ASSERT_EQ( tester.getStateVector()->size(), 0);// popped
 	ASSERT_EQ( tester.getCurrentStateID(), STATE_EXITMENU );//correct current state
 }
-/*
-TEST( StateMachine, mainMenu ) {
-	StateMachine stm;
-	
-*/
 
 int main(int argc, char **argv) {
 	::testing::InitGoogleTest(&argc, argv);

@@ -50,7 +50,11 @@ public://just temporary, until gettors and settors are in place
 	bool operator <( const Goal &other) const {
 		return name<other.name;
 	}
-
+	
+	bool operator ==( const Goal &other) const {
+		return (priority==other.priority && completion==other.completion && 
+				unitcost==other.unitcost && name==other.name  );
+	}
 };
 
 //========= GoalContainer ===================================
