@@ -57,7 +57,11 @@ int GoalContainer::loadFile( const std::string &name) {
 		while (label != endLabel && parser.moreToGo()) {
 			if (label=="goal") {
 				Goal goal= readGoal(parser,label);//given the label, load the struct
-				gs.insert(goal);	//should perform some error detection.
+				
+				auto res=gs.insert(goal);
+				if ( res.first!=gs.end() && res.second ) // succeeded, not a duplicate
+					v.push_back(goal);	//only load unique records, keep initial order
+
 				label = parser.getLabel();//read the next label
 			}
 			else throw std::runtime_error("Entries of a different type detected");
@@ -65,7 +69,6 @@ int GoalContainer::loadFile( const std::string &name) {
 	} catch(std::exception &e){
 		cerr<<"exception caught: "<<e.what()<<'\n';
 	}
-	std::copy(gs.begin(),gs.end(),std::back_inserter(v));			
 	return v.size();
 }
 

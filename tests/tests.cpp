@@ -108,10 +108,12 @@ TEST( GoalContainer, readNonOpenableFile ) {
 TEST( GoalContainer, openfile ) {
 	GoalContainer gc;
 	gc.loadFile("goalsample.xml");//read records from the sample xml file
-	ASSERT_EQ(gc.size(),1);
+	ASSERT_EQ(gc.size(),3); // also testing for rejetion of duplicate goals included in input file
 	ostringstream out;	// create a stringstream to hold the pring output
 	gc.printAll(out);	// invoke printall to dump output to the stream
-	ASSERT_EQ(out.str(),"Sample goal, \t100, \t50, \t0.01\n");
+	ASSERT_EQ(out.str(),	"Sample goal, \t100, \t50, \t0.01\n"
+				"Create Goals app, \t100, \t10, \t0.1\n"
+				"Pass All tests at 100%, \t100, \t100, \t0.01\n");
 }
 //=================================================================================
 //goal container tester class

@@ -6,4 +6,22 @@
 		<completion>50</completion>  <!-- range is 0 to 100 -->
 		<unitcost>0.01</unitcost>    <!-- hours per completion unit -->
 	</goal>
+	<goal>
+		<name>Create Goals app</name>
+		<priority>100</priority>
+		<completion>10</completion>
+		<unitcost>0.1</unitcost>
+	</goal>
+	<goal>
+		<name>Create Goals app</name>
+		<priority>100</priority>
+		<completion>10</completion>
+		<unitcost>0.1</unitcost>
+	</goal>
+	<goal>
+		<name>Pass All tests at 100%</name>
+		<priority>100</priority>
+		<completion>100</completion>
+		<unitcost>0.01</unitcost>
+	</goal>
 </goalkeeper>
