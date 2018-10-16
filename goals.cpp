@@ -26,7 +26,6 @@
 #include <algorithm>
 #include "goals.h"
 
-using namespace std;
 
 std::ostream& operator <<( std::ostream& out, const Goal &goal) {
 	return goal.print(out);
@@ -64,17 +63,17 @@ int GoalContainer::loadFile( const std::string &name) {
 
 				label = parser.getLabel();//read the next label
 			}
-			else throw std::runtime_error("Entries of a different type detected");
+			else throw(std::runtime_error("Entries of a different type detected"));
 		}	
 	} catch(std::exception &e){
-		cerr<<"exception caught: "<<e.what()<<'\n';
+		std::cerr<<"exception caught: "<<e.what()<<'\n';
 	}
 	return v.size();
 }
 
 bool GoalContainer::saveFile() {
 	if ( isModified() ) {
-		std::cout<<"saving to "<<filename<<"...";
+		std::cerr<<"saving to "<<filename<<"...";
 		//create backup
 		try{
 			XMLWriter writer{filename};
@@ -84,7 +83,7 @@ bool GoalContainer::saveFile() {
 				writer.writeGoal(goal);
 			writer.closeLabel();
 		} catch (std::exception& e) {
-			cout<<"Exception caught while saving file:"<<e.what()<<"\n";
+			std::cerr<<"Exception caught while saving file:"<<e.what()<<"\n";
 			return false;
 		}
 
@@ -111,10 +110,10 @@ Goal GoalContainer::readGoal( XMLParser &parser, std::string &label) {
 			goal.completion = std::stoi(data);
 		else if (leafLabel == "unitcost")
 			goal.unitcost = std::stod(data);
-		else throw(runtime_error(leafLabel +": unknown label in leaf data"));	
+		else throw(std::runtime_error(leafLabel +": unknown label in leaf data"));	
 		std::string dataEnd{"/"+leafLabel};
 		if (parser.getLabel() !=dataEnd)
-			throw( runtime_error(leafLabel +": Leaf data label does not close properly"));
+			throw( std::runtime_error(leafLabel +": Leaf data label does not close properly"));
 		leafLabel=parser.getLabel();// if it throws, will be caught by openfile
 	}
 	

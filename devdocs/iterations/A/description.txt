@@ -4,7 +4,7 @@ Iteration starting Mon 17/Sept/2018
 
 Target: A text based console app that will:
 		a.Read an XML file containing Goal records consisting of:
-			i. a name text field of at most 80 chars
+			i. a name text field of at most 40 chars
 			ii.a priority numerical field ranging from 0(Disabled) to 100(Life or death-urgent)
 			iii.a numerical field describing the completion percentage of the goal [0,100] range
 			iv. a floating point numerical field, describing the temporal cost in hours of increasing

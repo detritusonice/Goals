@@ -70,6 +70,13 @@ void ExitMenu::act() {
 
 
 void MainMenu::display() { 
+	std::cout<<"GOALS:\n";
+	std::cout<<std::setfill('=')<<std::setw(80)<<"\n";
+	std::cout<<std::setfill(' ')<<std::setw(40)<<"Name";
+	std::cout<<std::setw(12)<<"Priority"<<std::setw(12)<<"%Completed"<<std::setw(12)<<" Unit Cost\n";
+	std::cout<<std::setfill('-')<<std::setw(80)<<"\n"<<std::setfill(' ');
+	gc.printAll(std::cout);
+	std::cout<<std::setfill('=')<<std::setw(80)<<"\n";
 	std::cout<<"Main menu: e for exit, t for break the loop, x for exception:";
 }
 

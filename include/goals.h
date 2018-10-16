@@ -28,6 +28,7 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
+#include <iomanip>
 
 class XMLParser;
 //==========Goal============================================
@@ -43,7 +44,8 @@ public://just temporary, until gettors and settors are in place
 		name{gn},priority{gp},completion{gc},unitcost{uc} {}
 	
 	std::ostream& print( std::ostream &strm ) const {
-		strm<<name<<", \t"<<priority<<", \t"<<completion<<", \t"<< unitcost<<'\n';
+		strm<<std::setfill(' ')<<std::setw(40)<<name;
+		strm<<std::setw(12)<<priority<<std::setw(12)<<completion<<std::setw(7)<<""<<unitcost<<'\n';
 		return strm;
 	}
 

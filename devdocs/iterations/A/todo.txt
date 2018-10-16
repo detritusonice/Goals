@@ -7,11 +7,14 @@ IT XMLParser class 	DONE
 
 IT GoalContainer readFile	DONE
 
-IT Output in an ordered manner.
+IT Output in an ordered manner. DONE
 IT Action menu
-	IT Exit option
-	IT Save option
-	I  GoalTester class to enable testing the load/save and edit features
+	IT Exit option		DONE
+	IT Save option		DONE
+	I  GoalTester class to enable testing the load/save and edit features	DONE
+IT GoalContainer status (to check if save is necessary)	DONE
+IT Create Backup file of original goals.xml before saving changes
+
 * = iteration B
 *	IT Sort option
 *	IT Sort submenu
@@ -21,6 +24,5 @@ IT Action menu
 *IT Consider outputting more entries than the lines of screen
 *IT StateMachine status (for storing sorting preferences)
 *IT StateMachine xml settings file
-*IT GoalContainer status (to check if save is necessary)
 
 

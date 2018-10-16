@@ -51,7 +51,7 @@ TEST(goal,create) {
 // test if printing works as planned. Output to an ostringstream and compare 
 TEST(goal,print) {
 	Goal goal{"Sample goal",100,50,0.01};
-	string str("Sample goal, \t100, \t50, \t0.01\n");
+	string str("                             Sample goal         100          50       0.01\n");
 	ostringstream out;
 	goal.print(out);
 	ASSERT_EQ(str, out.str()); //compare expected to the ostrstreams string
@@ -94,7 +94,7 @@ TEST( GoalContainer, readGoal ) {
 	Goal goal=gc.readGoal(parser,label);//should fill in the fields
 	std::ostringstream out;
 	goal.print(out);//dump to string
-	std::string str("Sample goal, \t100, \t50, \t0.01\n");
+	std::string str("                             Sample goal         100          50       0.01\n");
 	ASSERT_EQ(out.str(),str);
 }
 //test trying to read from a nonexistent or unreadable file
@@ -111,14 +111,14 @@ TEST( GoalContainer, openfile ) {
 	ASSERT_EQ(gc.size(),3); // also testing for rejetion of duplicate goals included in input file
 	ostringstream out;	// create a stringstream to hold the pring output
 	gc.printAll(out);	// invoke printall to dump output to the stream
-	ASSERT_EQ(out.str(),	"Sample goal, \t100, \t50, \t0.01\n"
-				"Create Goals app, \t100, \t10, \t0.1\n"
-				"Pass All tests at 100%, \t100, \t100, \t0.01\n");
+	ASSERT_EQ(out.str(),"                             Sample goal         100          50       0.01\n"
+			"                        Create Goals app         100          10       0.1\n"
+			"                  Pass All tests at 100%         100         100       0.01\n"	);
 }
 //=================================================================================
 //goal container tester class
 
-class GoalTester {
+class GoalTester{
 	GoalContainer* gc;
  public:
 	GoalTester( GoalContainer* container ): gc{container} {
