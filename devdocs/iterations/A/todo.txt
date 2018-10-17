@@ -24,5 +24,3 @@ IT Create Backup file of original goals.xml before saving changes
 *IT Consider outputting more entries than the lines of screen
 *IT StateMachine status (for storing sorting preferences)
 *IT StateMachine xml settings file
-
-

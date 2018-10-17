@@ -34,5 +34,5 @@ int main( int argc, char** argv) {
 	}catch( std::exception &e) {
 		std::cerr<<"Exception caught:"<<e.what()<<"\n";
 	}
-	return 1;
+	return 0;
 }
