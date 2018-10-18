@@ -7,3 +7,4 @@ testgoals
 goals.xml
 goalSaved.xml
 *.ori
+*.bak

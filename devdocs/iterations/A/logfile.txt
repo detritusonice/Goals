@@ -1,3 +1,67 @@
+commit dea58475ace1a78b095907d43de5553c10f2be08
+Merge: 0cee4fc aa40690
+Author: Thanasis Karpetis <tkarpetis@gmail.com>
+Date:   Wed Oct 17 23:26:27 2018 +0300
+
+    merged conflicting master to origin/master
+
+commit 0cee4fc8ed775315446e6f627b3006d9b37ee80a
+Author: Thanasis Karpetis <tkarpetis@gmail.com>
+Date:   Tue Oct 16 19:06:07 2018 +0300
+
+    Main menu state prints ordered report of Goals. Tests tweaked accordingly. All tests pass.
+
+commit a0f034c10db5c2c729e34c11fbfcdd6ea82fabfb
+Author: Thanasis Karpetis <tkarpetis@gmail.com>
+Date:   Tue Oct 16 18:16:43 2018 +0300
+
+    GoalContainer preserving order between save-read cycles, while removing duplicates. goalsample includes duplicate Goal records
+
+commit 5932d8d6b6768cae36e6076bb895a399a2dd69d7
+Author: Thanasis Karpetis <tkarpetis@gmail.com>
+Date:   Mon Oct 15 17:36:37 2018 +0300
+
+    Test for file saving, using Goaltester and equality operator for goals
+
+commit 1f7a6479af388d8ef60cea8b085f403ff6cba295
+Author: Thanasis Karpetis <tkarpetis@gmail.com>
+Date:   Sun Oct 14 16:42:45 2018 +0300
+
+    implemented (not tested) XMLWriter and save feature for GoalContainer
+
+commit ff59cc7cdc13b9fd849f392f103d338dd4e966e3
+Author: Thanasis Karpetis <tkarpetis@gmail.com>
+Date:   Sun Oct 14 11:18:14 2018 +0300
+
+    Moved GoalContainer in a global variable to ease access from states and facilitate testing
+
+commit cae436c6a4101b7308c87ef19e8aeb1c7a072640
+Author: Thanasis Karpetis <tkarpetis@gmail.com>
+Date:   Fri Sep 28 20:52:47 2018 +0300
+
+    automated tests for state machine invariants and state transition
+    test-only friend tester classes in tests.cpp for StateMachine and existing
+    state classes
+
+commit 5eb4762921232b90a9ec29e087c30be0f0be4e3a
+Author: Thanasis Karpetis <tkarpetis@gmail.com>
+Date:   Fri Sep 28 18:48:30 2018 +0300
+
+    Basic state machine and state hierarchy established, no automated tests
+    Added MIT licence info in all source files
+
+commit f41ee97a2e875763466102421421b8b5430d57ee
+Author: Thanasis Karpetis <tkarpetis@gmail.com>
+Date:   Fri Sep 21 21:38:58 2018 +0300
+
+    goals now reads an existing goals.xml file. Update iteration A todo.txt
+
+commit aa406904fec0bae59d796b5d60bed1e399765601
+Author: Thanasis Karpetis <tkarpetis@gmail.com>
+Date:   Fri Sep 21 21:38:58 2018 +0300
+
+    goals now reads an existing goals.xml file. Update iteration A todo.txt
+
 commit f729369a20583f72c4a4837df09eaa8872ee93b8
 Author: Thanasis Karpetis <tkarpetis@gmail.com>
 Date:   Thu Sep 20 20:05:39 2018 +0300

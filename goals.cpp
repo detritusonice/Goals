@@ -73,6 +73,8 @@ int GoalContainer::loadFile( const std::string &name) {
 
 bool GoalContainer::saveFile() {
 	if ( isModified() ) {
+		std::cerr<<"creating backup file "<<filename<<".bak\n";
+		system( ("cp "+filename+" "+filename+".bak -f").c_str() );
 		std::cerr<<"saving to "<<filename<<"...";
 		//create backup
 		try{

@@ -13,7 +13,7 @@ IT Action menu
 	IT Save option		DONE
 	I  GoalTester class to enable testing the load/save and edit features	DONE
 IT GoalContainer status (to check if save is necessary)	DONE
-IT Create Backup file of original goals.xml before saving changes
+IT Create Backup file of original goals.xml before saving changes DONE
 
 * = iteration B
 *	IT Sort option
