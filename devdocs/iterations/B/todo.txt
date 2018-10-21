@@ -1,0 +1,20 @@
+IT = implement and test to 100%
+
+IT Main menu
+	IT Sort option
+	IT Verbose option
+	IT Refresh Display option
+	IT Sort submenu
+		IT Select sorting criterion
+		IT Goal comparison functions
+		IT Sort output of goal entries based on chosen criterion
+		IT Consider outputting more entries than the lines of screen
+
+	IT StateMachine status (for storing sorting preferences)
+	IT StateMachine xml settings file
+
+*=Iteration C:
+*IT Insert option
+*IT Delete option
+*IT Modify option
+

@@ -1,0 +1,28 @@
+Goals Iteration B description file
+
+Iteration starting Fri 19/Oct/2018
+
+With result of Iteration A as basis, extend app to:
+		A. Have the ability to show Goal records following user's command
+
+		B. Give a short and a long version of the main menu wording
+
+		C. Offer the ability to sort the goal records displaying a submenu
+
+		D. The sort submenu will offer one field-related sorting criterion for the user to select
+
+		E. The records will be displayed ordered according to the user's selection
+
+		F. Initial order of records will not be altered. When file is saved, original order remains
+		G. Sorting and display preferences will be kept in a separate xml file which wil be read
+			upon program start and updated, if need be, on program exit
+
+		H.100% tests passed, tests fully covering file existence, read correctness, creation, 
+			backup creation and overwriting, screen outuput, menu user input, Goal objects,
+			containers of Goal records correct exception behaviour.
+
+Iteration Duration: 3 weeks of two hours per day.
+
+Iteration B initiation is tagged Iter_B_Start
+Iteration B end wil be tagged Iter_B_End
+

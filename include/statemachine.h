@@ -72,8 +72,11 @@ class ExitMenu : public State {
 class MainMenu : public State {
 	bool changed;
 	char c;
+	bool verbose;
+	bool refresh;
+	void showGoals();
  public:
-	MainMenu():State{STATE_MAINMENU},changed{false},c{0} {}
+	MainMenu():State{STATE_MAINMENU},changed{false},c{0},verbose{true},refresh{true} {}
 	void display();
 	void input();
 	void act();

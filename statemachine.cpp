@@ -70,6 +70,18 @@ void ExitMenu::act() {
 
 
 void MainMenu::display() { 
+	if (refresh)
+	{
+		showGoals();
+		refresh=false;
+	}
+	if (verbose)
+		std::cout<<"Select action: e(xit), v(erbose mode off),r(efresh display) ";
+	else
+		std::cout<<"e,v,r: ";
+}
+
+void MainMenu::showGoals() {
 	std::cout<<"GOALS:\n";
 	std::cout<<std::setfill('=')<<std::setw(80)<<"\n";
 	std::cout<<std::setfill(' ')<<std::setw(40)<<"Name";
@@ -77,7 +89,6 @@ void MainMenu::display() {
 	std::cout<<std::setfill('-')<<std::setw(80)<<"\n"<<std::setfill(' ');
 	gc.printAll(std::cout);
 	std::cout<<std::setfill('=')<<std::setw(80)<<"\n";
-	std::cout<<"Main menu: e for exit, t for break the loop, x for exception:";
 }
 
 void MainMenu::input() { 
@@ -88,6 +99,10 @@ void MainMenu::act() {
 	switch(c) {
 		case 'E':
 		case 'e': StateMachine::setNextStateID(STATE_EXITMENU);break;
+		case 'V':
+		case 'v': verbose=!verbose;break;
+		case 'R':
+		case 'r': refresh=true;break;
 		case 't': StateMachine::setNextStateID(STATE_EXIT);break;
 		case 'x': throw(std::runtime_error{"YOU TERMINATED ME!!!"});break;
 		default: break;
