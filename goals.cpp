@@ -121,4 +121,40 @@ Goal GoalContainer::readGoal( XMLParser &parser, std::string &label) {
 	
 	return goal;
 }
+// called to validate the format of a candidate string of sorting preferences
+bool GoalContainer::validateString( std::string candidatePrefs) {
+
+	if (candidatePrefs.length()&1) 
+		return false;		// no odd length accepted. field-order pairs only
+	if (candidatePrefs.length()>8)
+		return false;
+	if (candidatePrefs.empty()) 
+		return true;		// empty string sets order as not-sorted, use file order
+
+	enum {
+		INVALID=0,
+		AVAILABLE,
+		USED
+	};
+	for (int i=0;i<candidatePrefs.length();i++) {
+		if (!isalpha(candidatePrefs[i]))
+			return false;
+		candidatePrefs[i]=std::tolower(candidatePrefs[i]);
+	}
+
+	int fields[26]={INVALID};
+	
+	fields['n'-'a']=fields['p'-'a']=fields['u'-'a']=fields['c'-'a']=AVAILABLE;
+
+	for (int i=0;i<candidatePrefs.length();i+=2) {
+		char c=candidatePrefs[i];
+		if (fields[c-'a']!=AVAILABLE) 
+			return false;		//invalid char or used more than once
+		char o=candidatePrefs[i+1];
+		if (o!='a' && o!='d')	
+			return false; 		// not specifying order
+		fields[c-'a']=USED;
+	}
+	return true;
+}
 

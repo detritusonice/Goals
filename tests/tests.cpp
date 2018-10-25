@@ -115,6 +115,21 @@ TEST( GoalContainer, openfile ) {
 			"                        Create Goals app         100          10       0.1\n"
 			"                  Pass All tests at 100%         100         100       0.01\n"	);
 }
+
+TEST( GoalContainer, validateString ) {
+	GoalContainer gc;
+	ASSERT_EQ( gc.validateString(""),true);		//valid, empty sorting options
+	ASSERT_EQ( gc.validateString("na"),true);	//valid, name ascending
+	ASSERT_EQ( gc.validateString("napacdud"),true); //valid, max length, all fields
+	ASSERT_EQ( gc.validateString("NA"),true);	//valid, uppercase version
+	ASSERT_EQ( gc.validateString("1d"),false);	//invalid, nonalpha character
+	ASSERT_EQ( gc.validateString("nap"),false);	//invalid, odd length
+	ASSERT_EQ( gc.validateString("nana"),false);	//invlaid, repetition of field
+	ASSERT_EQ( gc.validateString("napacdudna"),false); //invalid, too long
+	ASSERT_EQ( gc.validateString("nk"),false);	//invalid, inappropriate order character
+	ASSERT_EQ( gc.validateString("za"),false);	//invalid, inappropriate field character
+}
+
 //=================================================================================
 //goal container tester class
 
@@ -129,9 +144,9 @@ class GoalTester{
 		gc=nullptr;
 	}
 
-	bool getModified() {return gc->modified;}
+	bool getModified() {return gc->modifiedGoals;}
 
-	void setModified( bool val) { gc->modified=val;}
+	void setModified( bool val) { gc->modifiedGoals=val;}
 
 	std::string getFilename() { return gc->filename;}
 

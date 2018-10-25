@@ -76,13 +76,14 @@ void MainMenu::display() {
 		refresh=false;
 	}
 	if (verbose)
-		std::cout<<"Select action: e(xit), v(erbose mode off),r(efresh display) ";
+		std::cout<<"Select action: e(xit), v(erbose mode off),r(efresh display),s(ort) ";
 	else
-		std::cout<<"e,v,r: ";
+		std::cout<<"e,q,v,r,s: ";
 }
 
 void MainMenu::showGoals() {
-	std::cout<<"GOALS:\n";
+	std::cout<<"GOALS:";
+	std::cout<<std::setfill(' ')<<std::setw(73)<<"["+gc.getSortPrefs()+"]"<<'\n';
 	std::cout<<std::setfill('=')<<std::setw(80)<<"\n";
 	std::cout<<std::setfill(' ')<<std::setw(40)<<"Name";
 	std::cout<<std::setw(12)<<"Priority"<<std::setw(12)<<"%Completed"<<std::setw(12)<<" Unit Cost\n";
@@ -92,30 +93,66 @@ void MainMenu::showGoals() {
 }
 
 void MainMenu::input() { 
-	std::cin>>c; 
+	std::cin>>c;
+       c=std::tolower(c);	
 } 
 
 void MainMenu::act() { 
-	switch(c) {
-		case 'E':
+	switch(std::tolower(c)) {
+		case 'q':
 		case 'e': StateMachine::setNextStateID(STATE_EXITMENU);break;
-		case 'V':
 		case 'v': verbose=!verbose;break;
-		case 'R':
 		case 'r': refresh=true;break;
+		case 's': StateMachine::setNextStateID(STATE_SORTMENU);break;
 		case 't': StateMachine::setNextStateID(STATE_EXIT);break;
 		case 'x': throw(std::runtime_error{"YOU TERMINATED ME!!!"});break;
 		default: break;
 	}
 	c=char{0};
 }
+//-----------------------------------
+void SortMenu::display() {
+	std::cout<<"Select sorting criterion as a string of 8 characters at maximum. Format:\n";
+	std::cout<<"\t [fo]{1,4}\n\twhere f is the field ( [n]ame, [c]ompletion, [u]nitcost, [p]riority )\n";
+	std::cout<<"\tand o is order ( [a]scending, [d]escending )\n";
+	std::cout<<"Sort option ( '-' cancels sorting):";
+}
 
+void SortMenu::input() {
+	std::string newString;
+	while (newString.empty())
+		std::getline(std::cin,newString);
+	if (newString=="-")
+		newString="";//set the empty sorting string
+
+	if (gc.validateString(newString)) {
+		if (sortString!=newString) {
+			sortString=newString;
+			changed=true;
+		}
+		done=true;
+	}
+	else {
+		std::cout<<"\nEXAMPLE: napd\t\t to sort by name asc then by priority desc\n\n";
+	}
+}
+
+void SortMenu::act() {
+	if (changed)
+		gc.setSortPrefs(sortString);
+	if (done)
+		StateMachine::setNextStateID(STATE_MAINMENU);
+}
+
+//-----------------------------------
 // set the machine to the new state, pushing previous in the stack
 // this is called periodically by the run()'s loop
 //
-void StateMachine::setState( STATE newStateID ) { // transfer the machine to a new state
+void StateMachine::setState( STATE newStateID ) { 
+
 	if (state->getStateID() == newStateID) 
 		return; // nochange
+
 	if (!sv.empty() && sv.back()->getStateID()==newStateID) {
 		popState();
 		return;
@@ -124,6 +161,7 @@ void StateMachine::setState( STATE newStateID ) { // transfer the machine to a n
 	State* newstate=nullptr;
 	switch (newStateID) {
 		case STATE_MAINMENU: newstate= new MainMenu{};break;
+		case STATE_SORTMENU: newstate= new SortMenu{gc.getSortPrefs()};break;
 		default:break;
 	}
 	if (newstate!=nullptr) {
@@ -142,6 +180,7 @@ void StateMachine::popState() {
 	//	std::cout<<"popState() size before pop():"<<sv.size()<<"\n";
 		state=sv.back();
 		sv.pop_back();
+		state->onPopped();// may need to update the display
 	}
 	//std::cout<<"popState() size after pop():"<<sv.size()<<"\n";
 }

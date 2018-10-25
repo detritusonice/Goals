@@ -62,11 +62,12 @@ public://just temporary, until gettors and settors are in place
 //========= GoalContainer ===================================
 
 class GoalContainer {
-	bool modified;
+	bool modifiedGoals;
 	std::string filename;
 	std::vector<Goal> v;
+	std::string sortPrefs;
  public:
-	GoalContainer():modified{false} {}
+	GoalContainer():modifiedGoals{false},sortPrefs{"na"} {}
 
 	std::ostream& printAll( std::ostream &strm) const;
 
@@ -74,10 +75,18 @@ class GoalContainer {
 		return v.size();
 	}
 
-	bool isModified() {
-		return modified;
+	void setSortPrefs(std::string newPrefs) {
+		for(auto &c:newPrefs)
+			c=std::tolower(c);
+		sortPrefs=newPrefs; // string must be valid
 	}
 
+	bool isModified() {
+		return modifiedGoals;
+	}
+	std::string getSortPrefs() const {return sortPrefs;}
+
+	bool validateString( std::string candidatePrefs );
 	int loadFile( const std::string &name );
 	bool saveFile();
 	Goal readGoal(XMLParser &p, std::string &label);

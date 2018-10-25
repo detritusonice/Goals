@@ -34,7 +34,7 @@ enum STATE {
 	STATE_EXIT=0,
 	STATE_EXITMENU,
 	STATE_MAINMENU,
-
+	STATE_SORTMENU,
 	STATE_INVALID
 };
 
@@ -49,6 +49,7 @@ public:
 	virtual void display()=0;
 	virtual void input()=0;
 	virtual void act() {}
+	virtual void onPopped() {};
 	STATE getStateID() {return stateID;}
 #ifdef TESTING_ACTIVE
 	friend class StateTester;
@@ -80,8 +81,22 @@ class MainMenu : public State {
 	void display();
 	void input();
 	void act();
+	void onPopped() {refresh=true;}
 };
+//=============================================================================
 
+class SortMenu : public State {
+	bool done;
+	bool changed;
+	std::string sortString; // "NaPd" means Name ascending, Priority descending, up to 8 characters for now
+ public:
+	SortMenu(const std::string& oldString):State{STATE_SORTMENU},done{false},
+							changed{false},sortString{oldString} {}
+	void display();
+	void input();
+	void act();
+};
+	
 //=============================================================================
 
 class StateMachine {
