@@ -27,13 +27,14 @@
 #include "goals.h"
 
 
+
 std::ostream& operator <<( std::ostream& out, const Goal &goal) {
 	return goal.print(out);
 }
 // dumps the goal vector's entries to a stream
 std::ostream& GoalContainer::printAll(std::ostream& strm) const {
-		for (auto rec : v)
-			rec.print(strm);
+		for (auto idx :sorted )
+			v[idx].print(strm);
 		return strm;
 	}
 // loads unique named goal entries from specified file
@@ -68,6 +69,7 @@ int GoalContainer::loadFile( const std::string &name) {
 	} catch(std::exception &e){
 		std::cerr<<"exception caught: "<<e.what()<<'\n';
 	}
+	sortGoals();
 	return v.size();
 }
 
@@ -158,3 +160,55 @@ bool GoalContainer::validateString( std::string candidatePrefs) {
 	return true;
 }
 
+void GoalContainer::setSortPrefs(std::string newPrefs) {
+	for(auto &c:newPrefs)
+		c=std::tolower(c);
+	sortPrefs=newPrefs; // string must be valid
+	sortGoals();
+}
+void GoalContainer::sortGoals() {
+	sorted.clear();
+	sorted.resize(v.size());
+	for (int i=0;i<v.size();i++)
+		sorted[i]=i;
+	GoalComparator comp{this};
+	std::sort(sorted.begin(),sorted.end(),comp);
+}
+// comparator objects function operator, to be called recursively from std::sort and work based on depth and 
+// coparison preferences string in GoalContainer
+bool GoalComparator::operator()( const int &a, const int &b ) {
+	static int depth=0; 
+	
+	if (depth==gc->sortPrefs.length()) // no remaining sort fields, return physical file order of records 
+		return a<b;
+
+	char c=gc->sortPrefs[depth];
+	char o=gc->sortPrefs[depth+1];
+	bool lt,eq; 
+	
+	switch (c) {
+		case 'n':
+			 lt=( gc->v[a].name < gc->v[b].name );
+			 eq=( gc->v[a].name == gc->v[b].name ); 
+			 break;
+		case 'p':
+			 lt=( gc->v[a].priority < gc->v[b].priority );
+			 eq=( gc->v[a].priority == gc->v[b].priority ); 
+			 break;
+		case 'c':
+			 lt=( gc->v[a].completion < gc->v[b].completion );
+			 eq=( gc->v[a].completion == gc->v[b].completion ); 
+			 break;
+		case 'u':
+			 lt=( gc->v[a].unitcost < gc->v[b].unitcost );
+			 eq=( gc->v[a].unitcost == gc->v[b].unitcost ); 
+			 break;
+	} //work in progress, should consider equality, increasing and decreasing depth correctly and recursive calling
+	if (eq) {			//fields are equal, go to next criterion field, if any 
+		depth+=2;
+		bool res=(*this)(a,b);	//recursive call for the next field
+		depth-=2;
+		return res;
+	} 
+	return ( (o=='a')?lt:!lt);	//can be ordered based on this field.
+}

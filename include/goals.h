@@ -66,6 +66,7 @@ class GoalContainer {
 	std::string filename;
 	std::vector<Goal> v;
 	std::string sortPrefs;
+	std::vector<int> sorted;
  public:
 	GoalContainer():modifiedGoals{false},sortPrefs{"na"} {}
 
@@ -75,11 +76,7 @@ class GoalContainer {
 		return v.size();
 	}
 
-	void setSortPrefs(std::string newPrefs) {
-		for(auto &c:newPrefs)
-			c=std::tolower(c);
-		sortPrefs=newPrefs; // string must be valid
-	}
+	void setSortPrefs(std::string newPrefs);
 
 	bool isModified() {
 		return modifiedGoals;
@@ -90,9 +87,19 @@ class GoalContainer {
 	int loadFile( const std::string &name );
 	bool saveFile();
 	Goal readGoal(XMLParser &p, std::string &label);
+	void sortGoals();
+	friend class GoalComparator;
 #ifdef TESTING_ACTIVE
 	friend class GoalTester;
 #endif //TESTING_ACTIVE
+};
+
+class GoalComparator {
+	GoalContainer *gc;
+public:
+	GoalComparator( GoalContainer* cont ):gc{cont} {}
+
+	bool operator()( const int& a, const int& b);
 };
 
 //======== XMLParser =======================================
