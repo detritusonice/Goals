@@ -68,9 +68,9 @@ class GoalContainer {
 	std::string sortPrefs;
 	std::vector<int> sorted;
  public:
-	GoalContainer():modifiedGoals{false},sortPrefs{"na"} {}
+	GoalContainer():modifiedGoals{false},sortPrefs{""} {}
 
-	std::ostream& printAll( std::ostream &strm) const;
+	int printAll( std::ostream &strm,int first, int maxToPrint) const;
 
 	size_t size() {
 		return v.size();

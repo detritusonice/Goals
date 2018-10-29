@@ -27,6 +27,7 @@
 #define STATEMACHINE_H
 
 #include "goals.h"
+#include <sys/ioctl.h> // for struct_winsize and call to ioctl() in statemachine.cpp
 
 extern GoalContainer gc;// defined in statemachine.cpp
 
@@ -75,13 +76,14 @@ class MainMenu : public State {
 	char c;
 	bool verbose;
 	bool refresh;
-	void showGoals();
+	int nextToShow;
+	int showGoals(int firstRecord=0);
  public:
-	MainMenu():State{STATE_MAINMENU},changed{false},c{0},verbose{true},refresh{true} {}
+	MainMenu():State{STATE_MAINMENU},changed{false},c{0},verbose{true},refresh{true},nextToShow{0} {}
 	void display();
 	void input();
 	void act();
-	void onPopped() {refresh=true;}
+	void onPopped() {refresh=true;nextToShow=0;}
 };
 //=============================================================================
 
@@ -104,9 +106,11 @@ class StateMachine {
 	std::vector<State*> sv; 		// acts as a state stack
 	State* state; 				// the current state the machine is in
 	static STATE stateID;
+	static struct winsize ws;			// containing Linux console dimensions
 
 	void setState( STATE newStateID ); 	//push current state, activate new state
 	void popState(); 			// return to previous state
+	void queryConsoleDimensions();
 
  public:
 		// default state is stack with an ExitMenu and MainMenu as current 
@@ -129,6 +133,14 @@ class StateMachine {
 	static void setNextStateID( STATE newID ) {
 		stateID=newID;
 		}
+
+	static int termWidth() {
+		return ws.ws_col;
+	}
+
+	static int termHeight() {
+		return ws.ws_row;
+	}
 	
 	int run(); // main loop.
 

@@ -25,10 +25,12 @@
 // SOFTWARE.
 
 #include "statemachine.h"
+#include <unistd.h> // for STDOUT_FILENO
 
 GoalContainer gc;// to ease access from all states, defined here to enable testing
 
 STATE StateMachine::stateID=STATE_EXIT;
+struct winsize StateMachine::ws;
 
 void ExitMenu::display() { 
 	if (gc.isModified())
@@ -70,9 +72,9 @@ void ExitMenu::act() {
 
 
 void MainMenu::display() { 
-	if (refresh)
+	if (refresh || nextToShow>0)
 	{
-		showGoals();
+		nextToShow=showGoals(nextToShow);
 		refresh=false;
 	}
 	if (verbose)
@@ -81,24 +83,27 @@ void MainMenu::display() {
 		std::cout<<"e,q,v,r,s: ";
 }
 
-void MainMenu::showGoals() {
+int MainMenu::showGoals(int firstRecord) {
 	std::cout<<"GOALS:";
 	std::cout<<std::setfill(' ')<<std::setw(73)<<"["+gc.getSortPrefs()+"]"<<'\n';
 	std::cout<<std::setfill('=')<<std::setw(80)<<"\n";
 	std::cout<<std::setfill(' ')<<std::setw(40)<<"Name";
-	std::cout<<std::setw(12)<<"Priority"<<std::setw(12)<<"%Completed"<<std::setw(12)<<" Unit Cost\n";
+	std::cout<<std::setw(12)<<"Priority"<<std::setw(12)<<"%Completed"<< std::setw(12)<<" Unit Cost\n";
 	std::cout<<std::setfill('-')<<std::setw(80)<<"\n"<<std::setfill(' ');
-	gc.printAll(std::cout);
-	std::cout<<std::setfill('=')<<std::setw(80)<<"\n";
+
+	int res=gc.printAll(std::cout,firstRecord,std::max(1,StateMachine::termHeight()-7));
+	if (res==0) 
+		std::cout<<std::setfill('=')<<std::setw(80)<<"\n";
+	return res;// return next goal record to be shown
 }
 
 void MainMenu::input() { 
 	std::cin>>c;
-       c=std::tolower(c);	
+       c=std::tolower(c);// enforcing lowercase	
 } 
 
 void MainMenu::act() { 
-	switch(std::tolower(c)) {
+	switch(c) {
 		case 'q':
 		case 'e': StateMachine::setNextStateID(STATE_EXITMENU);break;
 		case 'v': verbose=!verbose;break;
@@ -185,6 +190,10 @@ void StateMachine::popState() {
 	//std::cout<<"popState() size after pop():"<<sv.size()<<"\n";
 }
 
+void StateMachine::queryConsoleDimensions() {
+	ioctl( STDOUT_FILENO, TIOCGWINSZ, &ws);
+}
+
 // state machine's main loop
 int StateMachine::run() {
 	bool done=false;
@@ -201,6 +210,10 @@ int StateMachine::run() {
 		
 		setState(stateID);
 		if (state==nullptr) popState(); 
+
+		queryConsoleDimensions();
+		//std::cerr<<"Terminal Dimensions: "<<termHeight()<<" rows x "<<termWidth()<<" columns\n";
+
 		state->display();
 		state->input();
 		state->act();

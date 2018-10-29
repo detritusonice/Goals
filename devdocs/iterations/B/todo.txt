@@ -8,7 +8,7 @@ IT Main menu
 		IT Select sorting criterion	DONE
 		IT Goal comparison functor	DONE
 		IT Sort output of goal entries based on chosen criterion DONE
-		IT Consider outputting more entries than the lines of screen
+		IT Consider outputting more entries than the lines of screen DONE
 		IT Option Not to order by field but by file entry order	DONE
 		IT Refresh Main menu order upon return from sort menu 	DONE
 

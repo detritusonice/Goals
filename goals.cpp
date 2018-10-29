@@ -32,10 +32,13 @@ std::ostream& operator <<( std::ostream& out, const Goal &goal) {
 	return goal.print(out);
 }
 // dumps the goal vector's entries to a stream
-std::ostream& GoalContainer::printAll(std::ostream& strm) const {
-		for (auto idx :sorted )
-			v[idx].print(strm);
-		return strm;
+int GoalContainer::printAll(std::ostream& strm,int first=0,int maxRecords=1000) const {
+		if (sorted.empty()) 
+			return 0;
+		int idx;
+		for ( idx = first; idx < sorted.size() && idx < first + maxRecords; idx++ )
+			v[sorted[idx]].print(strm);
+		return idx%sorted.size(); 
 	}
 // loads unique named goal entries from specified file
 // side effect: vector of goals is wiped clean to contain only the new entries.
