@@ -125,7 +125,7 @@ void SortMenu::display() {
 
 void SortMenu::input() {
 	std::string newString;
-	while (newString.empty())
+	while (newString.empty())	//get rid of newline chars left over by cin, if any
 		std::getline(std::cin,newString);
 	if (newString=="-")
 		newString="";//set the empty sorting string

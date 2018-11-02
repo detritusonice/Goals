@@ -32,11 +32,11 @@ std::ostream& operator <<( std::ostream& out, const Goal &goal) {
 	return goal.print(out);
 }
 // dumps the goal vector's entries to a stream
-int GoalContainer::printAll(std::ostream& strm,int first=0,int maxRecords=1000) const {
+int GoalContainer::printAll(std::ostream& strm,int first, int maxToPrint) const {
 		if (sorted.empty()) 
 			return 0;
 		int idx;
-		for ( idx = first; idx < sorted.size() && idx < first + maxRecords; idx++ )
+		for ( idx = first; idx < sorted.size() && idx < first + maxToPrint; idx++ )
 			v[sorted[idx]].print(strm);
 		return idx%sorted.size(); 
 	}
@@ -141,13 +141,13 @@ bool GoalContainer::validateString( std::string candidatePrefs) {
 		AVAILABLE,
 		USED
 	};
-	for (int i=0;i<candidatePrefs.length();i++) {
+	for (int i=0;i<candidatePrefs.length();i++) {	//ensure all alphabetic and lowercase
 		if (!isalpha(candidatePrefs[i]))
 			return false;
 		candidatePrefs[i]=std::tolower(candidatePrefs[i]);
 	}
 
-	int fields[26]={INVALID};
+	int fields[26]={INVALID}; // all possible chars, will mark valid and catch duplicates
 	
 	fields['n'-'a']=fields['p'-'a']=fields['u'-'a']=fields['c'-'a']=AVAILABLE;
 
@@ -155,7 +155,8 @@ bool GoalContainer::validateString( std::string candidatePrefs) {
 		char c=candidatePrefs[i];
 		if (fields[c-'a']!=AVAILABLE) 
 			return false;		//invalid char or used more than once
-		char o=candidatePrefs[i+1];
+
+		char o=candidatePrefs[i+1]; //each pair contains a field and an order specifier
 		if (o!='a' && o!='d')	
 			return false; 		// not specifying order
 		fields[c-'a']=USED;
@@ -165,25 +166,27 @@ bool GoalContainer::validateString( std::string candidatePrefs) {
 
 void GoalContainer::setSortPrefs(std::string newPrefs) {
 	for(auto &c:newPrefs)
-		c=std::tolower(c);
+		c=std::tolower(c);// must be lowercase to avoid unnecessary complexity
 	sortPrefs=newPrefs; // string must be valid
 	sortGoals();
 }
 void GoalContainer::sortGoals() {
-	sorted.clear();
+	sorted.clear();		//contains the sequence of indices of v, when properly ordered
 	sorted.resize(v.size());
+
 	for (int i=0;i<v.size();i++)
 		sorted[i]=i;
-	GoalComparator comp{this};
+
+	GoalComparator comp{this}; // build a comparator object to act on this container
 	std::sort(sorted.begin(),sorted.end(),comp);
 }
 // comparator objects function operator, to be called recursively from std::sort and work based on depth and 
 // coparison preferences string in GoalContainer
 bool GoalComparator::operator()( const int &a, const int &b ) {
-	static int depth=0; 
+	static int depth=0;//progressing by pair of characters 
 	
-	if (depth==gc->sortPrefs.length()) // no remaining sort fields, return physical file order of records 
-		return a<b;
+	if (depth==gc->sortPrefs.length()) 	// no remaining sort fields, 
+		return a<b;			//return physical file order of records 
 
 	char c=gc->sortPrefs[depth];
 	char o=gc->sortPrefs[depth+1];
@@ -213,5 +216,5 @@ bool GoalComparator::operator()( const int &a, const int &b ) {
 		depth-=2;
 		return res;
 	} 
-	return ( (o=='a')?lt:!lt);	//can be ordered based on this field.
+	return ( (o=='a')?lt:!lt);	//can be ordered based on this field, <less than> holds.
 }

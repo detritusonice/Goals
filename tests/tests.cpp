@@ -30,7 +30,6 @@
 #include "goals.h"
 #include "statemachine.h"
 
-using namespace std;// for brevity
 // template test
 // TEST( category, testinstance ) {
 // 	ASSERT_EQ( X, Y );
@@ -51,8 +50,8 @@ TEST(goal,create) {
 // test if printing works as planned. Output to an ostringstream and compare 
 TEST(goal,print) {
 	Goal goal{"Sample goal",100,50,0.01};
-	string str("                             Sample goal         100          50       0.01\n");
-	ostringstream out;
+	std::string str("                             Sample goal         100          50       0.01\n");
+	std::ostringstream out;
 	goal.print(out);
 	ASSERT_EQ(str, out.str()); //compare expected to the ostrstreams string
 }
@@ -109,13 +108,14 @@ TEST( GoalContainer, openfile ) {
 	GoalContainer gc;
 	gc.loadFile("goalsample.xml");//read records from the sample xml file
 	ASSERT_EQ(gc.size(),3); // also testing for rejetion of duplicate goals included in input file
-	ostringstream out;	// create a stringstream to hold the pring output
+	std::ostringstream out;	// create a stringstream to hold the pring output
 	gc.printAll(out);	// invoke printall to dump output to the stream
 	ASSERT_EQ(out.str(),"                             Sample goal         100          50       0.01\n"
 			"                        Create Goals app         100          10       0.1\n"
 			"                  Pass All tests at 100%         100         100       0.01\n"	);
 }
 
+// test acceptance of sort strings, valid or not
 TEST( GoalContainer, validateString ) {
 	GoalContainer gc;
 	ASSERT_EQ( gc.validateString(""),true);		//valid, empty sorting options
@@ -129,6 +129,8 @@ TEST( GoalContainer, validateString ) {
 	ASSERT_EQ( gc.validateString("nk"),false);	//invalid, inappropriate order character
 	ASSERT_EQ( gc.validateString("za"),false);	//invalid, inappropriate field character
 }
+
+
 
 //=================================================================================
 //goal container tester class
@@ -154,13 +156,15 @@ class GoalTester{
 
 	std::vector<Goal>* getGoalVector() { return &gc->v;}
 
+	std::vector<int>* getSortedVector() { return &gc->sorted;}
+	
 	bool isModified() { return gc->isModified();}
 	size_t getSize() {return gc->size();}
 	int loadFile (const std::string &name) { return gc->loadFile(name);}
 	bool saveFile() { return gc->saveFile();}
 };
 //----------------------------------------------------------------------------------
-
+// ensure saving after reading a file preserves content and order
 TEST( GoalContainer, saveFile ) {
 	GoalContainer gc;
 	GoalTester tester(&gc);
@@ -175,7 +179,7 @@ TEST( GoalContainer, saveFile ) {
 	GoalTester tester2(&gc2);
 	tester2.loadFile("goalSaved.xml");
 
-	vector<Goal> *v1, *v2;
+	std::vector<Goal> *v1, *v2;
 	v1=tester.getGoalVector();
 	v2=tester2.getGoalVector();
 
@@ -187,6 +191,27 @@ TEST( GoalContainer, saveFile ) {
 	v2=nullptr;
 
 }
+// test different ordering options using valid ordering strings in goalsample.xml
+TEST( GoalContainer, sort ) {
+	GoalContainer gc;
+	GoalTester tester(&gc);
+
+	tester.loadFile("goalsample.xml");
+	gc.setSortPrefs("na");
+	ASSERT_EQ( "na", gc.getSortPrefs() );
+
+	std::vector<int> *sorted= tester.getSortedVector();
+	ASSERT_TRUE( sorted !=nullptr );
+
+	GoalComparator comp{&gc};
+
+	for (int i=0; i< sorted->size()-1; i++) // test all consecutive pairs
+		ASSERT_TRUE( comp( (*sorted)[i], (*sorted)[i+1]));
+	
+	sorted=nullptr;
+}
+
+
 //=================================================================================
 //state machine testing classes
 //

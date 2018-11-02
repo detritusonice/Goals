@@ -64,13 +64,13 @@ public://just temporary, until gettors and settors are in place
 class GoalContainer {
 	bool modifiedGoals;
 	std::string filename;
-	std::vector<Goal> v;
-	std::string sortPrefs;
-	std::vector<int> sorted;
+	std::vector<Goal> v;	// Goal records in raw order as read from file
+	std::string sortPrefs;  // field-order pairs, in lowercase. used by comparator object
+	std::vector<int> sorted;// will contain the proper order of v's indices when sorted
  public:
 	GoalContainer():modifiedGoals{false},sortPrefs{""} {}
 
-	int printAll( std::ostream &strm,int first, int maxToPrint) const;
+	int printAll( std::ostream &strm,int first=0,int maxToPrint=1000) const;
 
 	size_t size() {
 		return v.size();
@@ -81,14 +81,16 @@ class GoalContainer {
 	bool isModified() {
 		return modifiedGoals;
 	}
-	std::string getSortPrefs() const {return sortPrefs;}
 
-	bool validateString( std::string candidatePrefs );
 	int loadFile( const std::string &name );
 	bool saveFile();
 	Goal readGoal(XMLParser &p, std::string &label);
+	std::string getSortPrefs() const {return sortPrefs;}
+
+	bool validateString( std::string candidatePrefs );
 	void sortGoals();
 	friend class GoalComparator;
+
 #ifdef TESTING_ACTIVE
 	friend class GoalTester;
 #endif //TESTING_ACTIVE
