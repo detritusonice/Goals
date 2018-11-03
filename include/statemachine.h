@@ -106,7 +106,7 @@ class StateMachine {
 	std::vector<State*> sv; 		// acts as a state stack
 	State* state; 				// the current state the machine is in
 	static STATE stateID;
-	static struct winsize ws;			// containing Linux console dimensions
+	static struct winsize ws;		// containing Linux console dimensions
 
 	void setState( STATE newStateID ); 	//push current state, activate new state
 	void popState(); 			// return to previous state

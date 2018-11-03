@@ -191,6 +191,19 @@ TEST( GoalContainer, saveFile ) {
 	v2=nullptr;
 
 }
+// helper for test sort below
+void testOrder( std::vector<int> *sorted, std::vector<int> *reference) {
+	ASSERT_TRUE( sorted !=nullptr );
+	ASSERT_TRUE( reference !=nullptr);
+
+	ASSERT_EQ( sorted->size(), reference->size() );
+
+	//for (int i=0;i<sorted->size();++i)
+	//	ASSERT_EQ( (*sorted)[i], (*reference)[i]);
+
+	ASSERT_TRUE( *sorted == *reference ); // use STL's comparison
+}
+
 // test different ordering options using valid ordering strings in goalsample.xml
 TEST( GoalContainer, sort ) {
 	GoalContainer gc;
@@ -208,6 +221,26 @@ TEST( GoalContainer, sort ) {
 	for (int i=0; i< sorted->size()-1; i++) // test all consecutive pairs
 		ASSERT_TRUE( comp( (*sorted)[i], (*sorted)[i+1]));
 	
+	std::vector<int> reference{0,1,2};// as read from file
+	gc.setSortPrefs("");		// should disable sorting, ie kepp file order	
+	testOrder( sorted, &reference);
+
+	reference={1,2,0};
+	gc.setSortPrefs("na"); //ascending by name
+	testOrder( sorted, &reference);
+
+	reference={2,0,1};
+	gc.setSortPrefs("cd"); //descending by completion
+	testOrder( sorted, &reference);
+	
+	reference={0,2,1};
+	gc.setSortPrefs("nd"); // descending by name
+	testOrder( sorted, &reference);
+
+	reference={2,0,1};
+	gc.setSortPrefs("uacd"); //ascending by unit cost, then descending by completion
+	testOrder( sorted, &reference);
+
 	sorted=nullptr;
 }
 

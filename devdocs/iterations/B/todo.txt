@@ -12,8 +12,11 @@ IT Main menu
 		IT Option Not to order by field but by file entry order	DONE
 		IT Refresh Main menu order upon return from sort menu 	DONE
 
-	IT StateMachine status (for storing sorting preferences)
-	IT StateMachine xml settings file
+	IT settings class, store mainmenu verbosity, console size consideration 
+		and sorting preferences
+	IT read and write xml settings file, saving a copy of the original
+	IT decouple XML declarations from goal related ones
+	IT separate xml writing from knowledge of structures if beneficial
 
 *=Iteration C:
 *IT Insert option

@@ -31,6 +31,7 @@
 // read the XML file's header and return it withouth the <? and ?> sequences
 // the result might possibly be empty on error. Do not care for the moment
 // Prerequisite: XMLParser has been initialized with a valid file
+
 std::string XMLParser::getHeader() {
 	std::string header;
 	if (in.good()) {
@@ -42,8 +43,10 @@ std::string XMLParser::getHeader() {
 	}
 	return header;//possibly empty, no error
 }
+
 // read the following xml label, discarding any whitespace and comments found.
 // Prerequisite: the parser has read the header entry
+
 std::string XMLParser::getLabel() {
 	std::string label;
 	bool opened=false;
@@ -67,25 +70,23 @@ std::string XMLParser::getLabel() {
 				  break;
 			case '\t':
 			case '\n':
-			case ' ':
-				  if (opened)
+			case ' ': if (opened)
 					  throw( std::runtime_error("whitespace in label"));
 				  break;
-			default:
-				  if (opened)
+			default: if (opened)
 					  label+=c;
 				  break;
 		}
-					
 	}
 	if (!closed) 
 		throw (std::runtime_error ("an opened label was never closed") );
-
 	return label;
 }
+
 // absorbs a line- or multiline comment, based on delimiter digraphs <! and !>
 // Prerequisite: the starting '<' of the comment has already been read and is followed by '!'
 // Side effect: moves the next reading point of the parser's stream to one-past then ending '>'
+
 void XMLParser::absorbComment() {
 	//to be called, a '<' has been consumed, and a ! has been peeked.
 	in.get();// consuming the starting digraph's ! - HACK. comments use <!-- and --> delimiters
@@ -108,6 +109,7 @@ void XMLParser::absorbComment() {
 	
 // reads leaf entry data as a string. does not allow for newlines in data.
 // Prerequisite: stream reading point at the start of a leaf line of the form <label>Data</label>
+
 std::string XMLParser::getLeafData() {
 	std::string data;
 	bool done=false;
@@ -121,11 +123,9 @@ std::string XMLParser::getLeafData() {
 			case '\n':
 			case '>': throw( std::runtime_error(data +"["+c+"illegal characters in data")); break;
 			
-			default : {
-					data+=c;
-					in.get();//withdraw char from stream
-					break;
-				  }
+			default : data+=c;
+				  in.get();//withdraw char from stream
+				  break;
 		}
 	}
 	if (!done)
@@ -134,11 +134,13 @@ std::string XMLParser::getLeafData() {
 }
 		  			  
 //writes header string
+
 void XMLWriter::writeHeader() {
 	out<<"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
 }
 
 //writes openlabel, push label in label stack, increment indent level, optionally start new line
+
 void XMLWriter::openLabel(const std::string& label, bool newline) {
 	indent();
 	out<<'<'<<label<<'>';
@@ -149,6 +151,7 @@ void XMLWriter::openLabel(const std::string& label, bool newline) {
 }
 
 //write closelabel, pop label from label stack,reduce indent level, start a new line
+
 void XMLWriter::closeLabel() {
 	if (labelStack.empty())
 		throw ( std::runtime_error("Request to close an unopened label"));
@@ -160,6 +163,7 @@ void XMLWriter::closeLabel() {
 }
 
 //write a whole goal entry
+
 void XMLWriter::writeGoal( const Goal& goal) {
 	openLabel("goal",true);
 	openLabel("name"); out<<goal.name; closeLabel();

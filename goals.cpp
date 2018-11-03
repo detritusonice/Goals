@@ -31,7 +31,9 @@
 std::ostream& operator <<( std::ostream& out, const Goal &goal) {
 	return goal.print(out);
 }
+
 // dumps the goal vector's entries to a stream
+
 int GoalContainer::printAll(std::ostream& strm,int first, int maxToPrint) const {
 		if (sorted.empty()) 
 			return 0;
@@ -40,23 +42,21 @@ int GoalContainer::printAll(std::ostream& strm,int first, int maxToPrint) const 
 			v[sorted[idx]].print(strm);
 		return idx%sorted.size(); 
 	}
+
 // loads unique named goal entries from specified file
 // side effect: vector of goals is wiped clean to contain only the new entries.
-int GoalContainer::loadFile( const std::string &name) {
 
+int GoalContainer::loadFile( const std::string &name) {
 	v.clear();
 	filename= name;//store the filename of the container's records for saving
 	std::set<Goal> gs;
-
 	try {
 
 		XMLParser parser{name};
 		std::string header = parser.getHeader();
 		std::string root = parser.getLabel(); // root element, <goalkeeper>
-		
 		std::string label= parser.getLabel(); // read the first <goal> label
 		std::string endLabel = std::string{"/"} + root;
-
 		while (label != endLabel && parser.moreToGo()) {
 			if (label=="goal") {
 				Goal goal= readGoal(parser,label);//given the label, load the struct
@@ -76,6 +76,10 @@ int GoalContainer::loadFile( const std::string &name) {
 	return v.size();
 }
 
+// saves xml file containing goal records disregarding sort order.
+// sideEffect: creates a .bak file of the existing (supposedly original) file
+// before overwriting
+
 bool GoalContainer::saveFile() {
 	if ( isModified() ) {
 		std::cerr<<"creating backup file "<<filename<<".bak\n";
@@ -93,22 +97,21 @@ bool GoalContainer::saveFile() {
 			std::cerr<<"Exception caught while saving file:"<<e.what()<<"\n";
 			return false;
 		}
-
 	}
 	return true;
 }
 
 // read a goal record, consisting of leaf records, discarding comment entries
 // Prerequisite: parser has read the file up to a label="goal"
+
 Goal GoalContainer::readGoal( XMLParser &parser, std::string &label) {
 	Goal goal;
 	std::string leafLabel=parser.getLabel();
 	std::string endLabel{"/"};
-	endLabel+=label;// forming the /goal ending label.
+	endLabel+=label;		// forming the /goal ending label.
 	
 	while (leafLabel != endLabel && parser.moreToGo()) {
 		std::string data=parser.getLeafData();
-
 		if (leafLabel == "name")
 			goal.name=data; // would a move be more efficient or is it done implicitly?
 		else if (leafLabel == "priority")
@@ -123,19 +126,18 @@ Goal GoalContainer::readGoal( XMLParser &parser, std::string &label) {
 			throw( std::runtime_error(leafLabel +": Leaf data label does not close properly"));
 		leafLabel=parser.getLabel();// if it throws, will be caught by openfile
 	}
-	
 	return goal;
 }
-// called to validate the format of a candidate string of sorting preferences
-bool GoalContainer::validateString( std::string candidatePrefs) {
 
+// called to validate the format of a candidate string of sorting preferences
+
+bool GoalContainer::validateString( std::string candidatePrefs) {
 	if (candidatePrefs.length()&1) 
 		return false;		// no odd length accepted. field-order pairs only
 	if (candidatePrefs.length()>8)
 		return false;
 	if (candidatePrefs.empty()) 
 		return true;		// empty string sets order as not-sorted, use file order
-
 	enum {
 		INVALID=0,
 		AVAILABLE,
@@ -146,10 +148,10 @@ bool GoalContainer::validateString( std::string candidatePrefs) {
 			return false;
 		candidatePrefs[i]=std::tolower(candidatePrefs[i]);
 	}
-
 	int fields[26]={INVALID}; // all possible chars, will mark valid and catch duplicates
-	
-	fields['n'-'a']=fields['p'-'a']=fields['u'-'a']=fields['c'-'a']=AVAILABLE;
+
+	fields['n'-'a'] = fields['p'-'a'] =
+	fields['u'-'a'] = fields['c'-'a'] = AVAILABLE;
 
 	for (int i=0;i<candidatePrefs.length();i+=2) {
 		char c=candidatePrefs[i];
@@ -164,54 +166,58 @@ bool GoalContainer::validateString( std::string candidatePrefs) {
 	return true;
 }
 
+// sets new sort string in lowercase chars, then sorts the goal records
+// Prerequisites: sorting string must be valid.
+// 		  the new string is presumably checked to be different than the previous one
+
 void GoalContainer::setSortPrefs(std::string newPrefs) {
 	for(auto &c:newPrefs)
 		c=std::tolower(c);// must be lowercase to avoid unnecessary complexity
 	sortPrefs=newPrefs; // string must be valid
 	sortGoals();
 }
+
+// Estblishes the new order of v's indices based on the new sorting string
+// by utilizing a recursive comparator
+// Note: may be called after an insert or deletion so re-creating the sorted vector is necessary
+
 void GoalContainer::sortGoals() {
 	sorted.clear();		//contains the sequence of indices of v, when properly ordered
 	sorted.resize(v.size());
-
 	for (int i=0;i<v.size();i++)
 		sorted[i]=i;
-
 	GoalComparator comp{this}; // build a comparator object to act on this container
 	std::sort(sorted.begin(),sorted.end(),comp);
 }
+
 // comparator objects function operator, to be called recursively from std::sort and work based on depth and 
-// coparison preferences string in GoalContainer
+// comparison preferences string in GoalContainer
+// Note: using a static to mark recursive use of the sorting string
+
 bool GoalComparator::operator()( const int &a, const int &b ) {
-	static int depth=0;//progressing by pair of characters 
+	static int depth=0;	//progressing by pair of characters 
 	
 	if (depth==gc->sortPrefs.length()) 	// no remaining sort fields, 
 		return a<b;			//return physical file order of records 
-
 	char c=gc->sortPrefs[depth];
 	char o=gc->sortPrefs[depth+1];
 	bool lt,eq; 
-	
 	switch (c) {
-		case 'n':
-			 lt=( gc->v[a].name < gc->v[b].name );
-			 eq=( gc->v[a].name == gc->v[b].name ); 
-			 break;
-		case 'p':
-			 lt=( gc->v[a].priority < gc->v[b].priority );
-			 eq=( gc->v[a].priority == gc->v[b].priority ); 
-			 break;
-		case 'c':
-			 lt=( gc->v[a].completion < gc->v[b].completion );
-			 eq=( gc->v[a].completion == gc->v[b].completion ); 
-			 break;
-		case 'u':
-			 lt=( gc->v[a].unitcost < gc->v[b].unitcost );
-			 eq=( gc->v[a].unitcost == gc->v[b].unitcost ); 
-			 break;
-	} //work in progress, should consider equality, increasing and decreasing depth correctly and recursive calling
-	if (eq) {			//fields are equal, go to next criterion field, if any 
-		depth+=2;
+		case 'n': lt=( gc->v[a].name < gc->v[b].name );
+			  eq=( gc->v[a].name == gc->v[b].name ); 
+			  break;
+		case 'p': lt=( gc->v[a].priority < gc->v[b].priority );
+			  eq=( gc->v[a].priority == gc->v[b].priority ); 
+			  break;
+		case 'c': lt=( gc->v[a].completion < gc->v[b].completion );
+			  eq=( gc->v[a].completion == gc->v[b].completion ); 
+			  break;
+		case 'u': lt=( gc->v[a].unitcost < gc->v[b].unitcost );
+			  eq=( gc->v[a].unitcost == gc->v[b].unitcost ); 
+			  break;
+	} 
+	if (eq) {			//fields are equal
+		depth+=2;		// mark next field, if one exists
 		bool res=(*this)(a,b);	//recursive call for the next field
 		depth-=2;
 		return res;
