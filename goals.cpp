@@ -144,7 +144,7 @@ bool GoalContainer::validateString( std::string candidatePrefs) {
 		USED
 	};
 	for (int i=0;i<candidatePrefs.length();i++) {	//ensure all alphabetic and lowercase
-		if (!isalpha(candidatePrefs[i]))
+		if (!std::isalpha(candidatePrefs[i]))
 			return false;
 		candidatePrefs[i]=std::tolower(candidatePrefs[i]);
 	}

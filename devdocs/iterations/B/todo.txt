@@ -12,7 +12,7 @@ IT Main menu
 		IT Option Not to order by field but by file entry order	DONE
 		IT Refresh Main menu order upon return from sort menu 	DONE
 
-	IT settings class, store mainmenu verbosity, console size consideration 
+	IT UserOptions class, store mainmenu verbosity, console size consideration 
 		and sorting preferences
 	IT read and write xml settings file, saving a copy of the original
 	IT decouple XML declarations from goal related ones

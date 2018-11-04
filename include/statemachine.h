@@ -29,15 +29,36 @@
 #include "goals.h"
 #include <sys/ioctl.h> // for struct_winsize and call to ioctl() in statemachine.cpp
 
-extern GoalContainer gc;// defined in statemachine.cpp
+//extern GoalContainer gc;// defined in statemachine.cpp
 
 enum STATE {
 	STATE_EXIT=0,
 	STATE_EXITMENU,
 	STATE_MAINMENU,
 	STATE_SORTMENU,
+	STATE_CONFIGMENU,
 	STATE_INVALID
 };
+
+class UserOptions {
+	bool verbosity;
+	bool pageing;
+
+	void setVerbosity( bool newvalue ) { verbosity = newvalue; }
+	void setPageing( bool newvalue ) { pageing = newvalue; }
+public:
+	UserOptions():verbosity{true},pageing{false} {}
+	bool getVerbosity() {return verbosity;}
+	bool getPageing() { return pageing; }
+
+	friend class StateMachine;
+	friend class ConfigMenu;
+#ifdef TESTING_ACTIVE
+	friend class StateTester;
+#endif //TESTING_ACTIVE
+};
+
+//extern UserOptions options; // defined in statemachine.cpp
 
 //=============================================================================
 // Base class for states of the machine
@@ -74,12 +95,11 @@ class ExitMenu : public State {
 class MainMenu : public State {
 	bool changed;
 	char c;
-	bool verbose;
 	bool refresh;
 	int nextToShow;
 	int showGoals(int firstRecord=0);
  public:
-	MainMenu():State{STATE_MAINMENU},changed{false},c{0},verbose{true},refresh{true},nextToShow{0} {}
+	MainMenu():State{STATE_MAINMENU},changed{false},c{0},refresh{true},nextToShow{0} {}
 	void display();
 	void input();
 	void act();
@@ -101,12 +121,33 @@ class SortMenu : public State {
 	
 //=============================================================================
 
+class ConfigMenu : public State {
+	enum {
+		CONFIG_BACK,
+		CONFIG_PAGING,
+		CONFIG_VERBOSE,
+		CONFIG_HELP,
+		NUM_CONFIG_OPTIONS
+	};
+	bool toggled[NUM_CONFIG_OPTIONS];
+ public:
+	ConfigMenu():State{STATE_CONFIGMENU},toggled{false}{}
+	void display();
+	void input();
+	void act();
+
+	void displayOption( int optionID );
+};
+	
+//=============================================================================
+
 class StateMachine {
 	bool changed;				// changes made to preferences
 	std::vector<State*> sv; 		// acts as a state stack
 	State* state; 				// the current state the machine is in
 	static STATE stateID;
 	static struct winsize ws;		// containing Linux console dimensions
+
 
 	void setState( STATE newStateID ); 	//push current state, activate new state
 	void popState(); 			// return to previous state
@@ -143,6 +184,8 @@ class StateMachine {
 	}
 	
 	int run(); // main loop.
+
+	void saveOptions();
 
 	friend class State; // in doubt: who should own a goal container? how is access to it given?
 #ifdef TESTING_ACTIVE	
