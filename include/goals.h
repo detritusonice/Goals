@@ -146,6 +146,7 @@ class XMLWriter {
 	void closeLabel();
 	//write a whole goal entry
 	void writeGoal( const Goal& goal);
+	void writeLeaf( const std::string &label, const std::string &data);
 };
 	
 std::ostream& operator <<( std::ostream& out, const Goal& goal);

@@ -6,5 +6,6 @@ goals
 testgoals
 goals.xml
 goalSaved.xml
+options.xml
 *.ori
 *.bak

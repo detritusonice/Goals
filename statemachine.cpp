@@ -34,6 +34,52 @@ UserOptions options;			// user's display preferences
 STATE StateMachine::stateID=STATE_EXIT;
 struct winsize StateMachine::ws;
 
+void UserOptions::loadFile( const std::string &fname) {
+	filename= fname;
+	try {
+		XMLParser parser{fname};
+		parser.getHeader();
+		std::string label=parser.getLabel();
+		std::string endlabel=std::string{"/"}+label;
+		label=parser.getLabel();
+		while (label !=endlabel  && parser.moreToGo()) {
+			std::string data = parser.getLeafData();
+			if (label=="verbosity")
+				options.verbosity=(data=="true");
+			else if (label=="pageing")
+				options.pageing = (data=="true");
+			else if (label=="sort")
+				gc.setSortPrefs(data);
+			else throw (std::runtime_error(label+" :unknown leaf label in "+fname));
+			std::string dataend{ "/"+label};
+			label = parser.getLabel();
+			if (label!=dataend)
+				throw( std::runtime_error("Error, leaf end label <"+dataend+"> missing"));
+
+			label=parser.getLabel(); // read label for the next record, or the root end
+		}
+	} catch ( std::exception &e ) {
+		std::cerr<<e.what();
+	}
+}
+
+void UserOptions::writeFile() {
+	std::cerr<<"creating options backup file "<<filename<<".bak\n";
+	system( ("cp "+filename+" "+filename+".bak -f").c_str() );
+	std::cerr<<"saving to "<<filename<<"...\n";
+	try{
+		XMLWriter writer{filename};
+		writer.writeHeader();
+		writer.openLabel("options",true); //root element
+		writer.writeLeaf("verbosity",(options.getVerbosity()?"true":"false"));
+		writer.writeLeaf("pageing",(options.getPageing()?"true":"false"));
+		writer.writeLeaf("sort",gc.getSortPrefs());
+		writer.closeLabel();
+	} catch (std::exception& e) {
+		std::cerr<<"Exception caught while saving file:"<<e.what()<<"\n";
+		}
+}
+
 void ExitMenu::display() { 
 	if (gc.isModified())
 		std::cout<<"\nsave changes (yes/no):";
@@ -276,13 +322,18 @@ void StateMachine::queryConsoleDimensions() {
 
 // save user configuration options
 void StateMachine::saveOptions() {
+	options.writeFile();
+}
 
+//read user's diplay and sorting options
+void readOptions() {
+	options.loadFile("options.xml");
 }
 
 // state machine's main loop
 int StateMachine::run() {
 	bool done=false;
-
+	readOptions();
 	try {
 		gc.loadFile("goals.xml");
 	} catch( std::exception &e) {

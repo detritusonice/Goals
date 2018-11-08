@@ -173,3 +173,9 @@ void XMLWriter::writeGoal( const Goal& goal) {
 	closeLabel();// goal
 }
 
+void XMLWriter::writeLeaf( const std::string &label, const std::string &data) {
+	openLabel(label,false);// one line record
+	out<<data;
+	closeLabel();
+}
+

@@ -29,7 +29,6 @@
 #include "goals.h"
 #include <sys/ioctl.h> // for struct_winsize and call to ioctl() in statemachine.cpp
 
-//extern GoalContainer gc;// defined in statemachine.cpp
 
 enum STATE {
 	STATE_EXIT=0,
@@ -43,11 +42,16 @@ enum STATE {
 class UserOptions {
 	bool verbosity;
 	bool pageing;
+	std::string filename;
 
 	void setVerbosity( bool newvalue ) { verbosity = newvalue; }
 	void setPageing( bool newvalue ) { pageing = newvalue; }
 public:
 	UserOptions():verbosity{true},pageing{false} {}
+	
+	void loadFile( const std::string &fname);
+	void writeFile();
+
 	bool getVerbosity() {return verbosity;}
 	bool getPageing() { return pageing; }
 
@@ -58,7 +62,6 @@ public:
 #endif //TESTING_ACTIVE
 };
 
-//extern UserOptions options; // defined in statemachine.cpp
 
 //=============================================================================
 // Base class for states of the machine
@@ -186,6 +189,7 @@ class StateMachine {
 	int run(); // main loop.
 
 	void saveOptions();
+	
 
 	friend class State; // in doubt: who should own a goal container? how is access to it given?
 #ifdef TESTING_ACTIVE	
