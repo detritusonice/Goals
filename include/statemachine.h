@@ -39,21 +39,23 @@ enum STATE {
 	STATE_INVALID
 };
 
+//--------------------------------------------------------------------------
+
 class UserOptions {
 	bool verbosity;
-	bool pageing;
+	bool paging;
 	std::string filename;
 
 	void setVerbosity( bool newvalue ) { verbosity = newvalue; }
-	void setPageing( bool newvalue ) { pageing = newvalue; }
+	void setPaging( bool newvalue ) { paging = newvalue; }
 public:
-	UserOptions():verbosity{true},pageing{false} {}
+	UserOptions():verbosity{true},paging{false} {}
 	
 	void loadFile( const std::string &fname);
 	void writeFile();
 
 	bool getVerbosity() {return verbosity;}
-	bool getPageing() { return pageing; }
+	bool getPaging() { return paging; }
 
 	friend class StateMachine;
 	friend class ConfigMenu;

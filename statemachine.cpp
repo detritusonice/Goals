@@ -46,8 +46,8 @@ void UserOptions::loadFile( const std::string &fname) {
 			std::string data = parser.getLeafData();
 			if (label=="verbosity")
 				options.verbosity=(data=="true");
-			else if (label=="pageing")
-				options.pageing = (data=="true");
+			else if (label=="paging")
+				options.paging = (data=="true");
 			else if (label=="sort")
 				gc.setSortPrefs(data);
 			else throw (std::runtime_error(label+" :unknown leaf label in "+fname));
@@ -72,7 +72,7 @@ void UserOptions::writeFile() {
 		writer.writeHeader();
 		writer.openLabel("options",true); //root element
 		writer.writeLeaf("verbosity",(options.getVerbosity()?"true":"false"));
-		writer.writeLeaf("pageing",(options.getPageing()?"true":"false"));
+		writer.writeLeaf("paging",(options.getPaging()?"true":"false"));
 		writer.writeLeaf("sort",gc.getSortPrefs());
 		writer.closeLabel();
 	} catch (std::exception& e) {
@@ -147,7 +147,7 @@ int MainMenu::showGoals(int firstRecord) {
 	std::cout<<std::setfill('-')<<std::setw(80)<<"\n"<<std::setfill(' ');
 
 	int res=gc.printAll(std::cout,firstRecord,
-			( options.getPageing()? std::max(1,StateMachine::termHeight()-7): 1<<30) );
+			( options.getPaging()? std::max(1,StateMachine::termHeight()-7): 1<<30) );
 	if (res==0) 
 		std::cout<<std::setfill('=')<<std::setw(80)<<"\n";
 	return res;// return next goal record to be shown
@@ -158,6 +158,7 @@ void MainMenu::input() {
        c=std::tolower(c);// enforcing lowercase	
 } 
 
+// Event handler, changing states if dictated by user choice
 void MainMenu::act() { 
 	switch(c) {
 		case 'q':
@@ -175,6 +176,7 @@ void MainMenu::act() {
 	c=char{0};
 }
 //-----------------------------------------------------------------------------------
+// Guides the user in inserting a proper sorting string
 void SortMenu::display() {
 	std::cout<<"Select sorting criterion as a string of 8 characters at maximum. Format:\n";
 	std::cout<<"\t [fo]{1,4}\n\twhere f is the field ( [n]ame, [c]ompletion, [u]nitcost, [p]riority )\n";
@@ -182,6 +184,7 @@ void SortMenu::display() {
 	std::cout<<"Sort option ( '-' cancels sorting):";
 }
 
+// Processes the user's string and if valid sets the changed flag.
 void SortMenu::input() {
 	std::string newString;
 	while (newString.empty())	//get rid of newline chars left over by cin, if any
@@ -200,7 +203,7 @@ void SortMenu::input() {
 		std::cout<<"\nEXAMPLE: napd\t\t to sort by name asc then by priority desc\n\n";
 	}
 }
-
+//Sets GoalContainer sorting Preferences string and exits when all done
 void SortMenu::act() {
 	if (changed)
 		gc.setSortPrefs(sortString);
@@ -218,7 +221,7 @@ void ConfigMenu::display() {
 			toggled[i]=false;
 		}
 	}
-	std::cout<<"Configuration: b(ack), p(aging ->"<<(options.getPageing()?"off":"on");
+	std::cout<<"Configuration: b(ack), p(aging ->"<<(options.getPaging()?"off":"on");
 	std::cout<<"), v(erbose ->"<<(options.getVerbosity()?"off":"on")<<"), h(elp) :";
 }	
 
@@ -228,7 +231,7 @@ void ConfigMenu::displayOption( int optionID ) {
 		case CONFIG_VERBOSE:
 			std::cout<<"Verbosity is now "<<(options.getVerbosity()?"on":"off")<<"\n\n";break;
 		case CONFIG_PAGING:	
-			std::cout<<"Paging is now "<<(options.getPageing()?"on":"off")<<"\n\n";break;
+			std::cout<<"Paging is now "<<(options.getPaging()?"on":"off")<<"\n\n";break;
 		case CONFIG_HELP:	
 			std::cout<<"Help:\n"
 "Verbosity switches wordiness in the menu prompt, when off just lists available characters\n"
@@ -266,7 +269,7 @@ void ConfigMenu::act() {
 		options.setVerbosity( !options.getVerbosity() );
 	}
        	if ( toggled[CONFIG_PAGING]  ) {
-		options.setPageing( !options.getPageing() );
+		options.setPaging( !options.getPaging() );
 	}
 	if ( toggled[CONFIG_BACK]) {
 		display();// user may have also toggled some other option, show feedback
@@ -347,7 +350,8 @@ int StateMachine::run() {
 		setState(stateID);
 		if (state==nullptr) popState(); 
 
-		queryConsoleDimensions();
+		if (options.getPaging())
+			queryConsoleDimensions();
 		//std::cerr<<"Terminal Dimensions: "<<termHeight()<<" rows x "<<termWidth()<<" columns\n";
 
 		state->display();

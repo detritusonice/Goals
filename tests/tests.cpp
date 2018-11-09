@@ -30,11 +30,6 @@
 #include "goals.h"
 #include "statemachine.h"
 
-// template test
-// TEST( category, testinstance ) {
-// 	ASSERT_EQ( X, Y );
-// }
-
 TEST(goal,create) {
 	try {
 		Goal goal{"Sample goal",100,50,0.01};
