@@ -162,16 +162,6 @@ void XMLWriter::closeLabel() {
 	labelStack.pop_back();
 }
 
-//write a whole goal entry
-
-void XMLWriter::writeGoal( const Goal& goal) {
-	openLabel("goal",true);
-	openLabel("name"); out<<goal.name; closeLabel();
-	openLabel("priority"); out<<goal.priority; closeLabel();
-	openLabel("completion"); out<<goal.completion; closeLabel();
-	openLabel("unitcost"); out<<std::setprecision(2); out<<goal.unitcost; closeLabel();
-	closeLabel();// goal
-}
 
 void XMLWriter::writeLeaf( const std::string &label, const std::string &data) {
 	openLabel(label,false);// one line record

@@ -31,6 +31,9 @@
 #include <iomanip>
 
 class XMLParser;
+class XMLWriter;
+class UserOptions;
+
 //==========Goal============================================
 
 class Goal {
@@ -59,35 +62,30 @@ public://just temporary, until gettors and settors are in place
 	}
 };
 
+std::ostream& operator <<( std::ostream& out, const Goal& goal);
+
 //========= GoalContainer ===================================
 
 class GoalContainer {
 	bool modifiedGoals;
 	std::string filename;
 	std::vector<Goal> v;	// Goal records in raw order as read from file
-	std::string sortPrefs;  // field-order pairs, in lowercase. used by comparator object
 	std::vector<int> sorted;// will contain the proper order of v's indices when sorted
+	int sortver;
  public:
-	GoalContainer():modifiedGoals{false},sortPrefs{""} {}
+	GoalContainer():modifiedGoals{false},sortver{-1} {}
 
 	int printAll( std::ostream &strm,int first=0,int maxToPrint=1000) const;
 
-	size_t size() {
-		return v.size();
-	}
+	size_t size() { return v.size(); }
 
-	void setSortPrefs(std::string newPrefs);
-
-	bool isModified() {
-		return modifiedGoals;
-	}
+	bool isModified() { return modifiedGoals; }
 
 	int loadFile( const std::string &name );
 	bool saveFile();
 	Goal readGoal(XMLParser &p, std::string &label);
-	std::string getSortPrefs() const {return sortPrefs;}
+	void writeGoal( XMLWriter& writer, const Goal& goal); 
 
-	bool validateString( std::string candidatePrefs );
 	void sortGoals();
 	friend class GoalComparator;
 
@@ -99,8 +97,7 @@ class GoalContainer {
 class GoalComparator {
 	GoalContainer *gc;
 public:
-	GoalComparator( GoalContainer* cont ):gc{cont} {}
-
+	GoalComparator( GoalContainer* cont):gc{cont}{} 
 	bool operator()( const int& a, const int& b);
 };
 
@@ -145,10 +142,47 @@ class XMLWriter {
 	//write closelabel, pop label from label stack,reduce indent level, start a new line
 	void closeLabel();
 	//write a whole goal entry
-	void writeGoal( const Goal& goal);
 	void writeLeaf( const std::string &label, const std::string &data);
 };
 	
-std::ostream& operator <<( std::ostream& out, const Goal& goal);
+
+//==============UserOptions Singleton==============================================
+
+class UserOptions {
+	bool verbosity;
+	bool paging;
+	std::string sortPrefs;  // field-order pairs, in lowercase. used by comparator object
+	std::string filename;
+	static int sortingver;// will increase to indicate a new sorting string set.
+
+	UserOptions():verbosity{true},paging{false},sortPrefs{""} {} //private constructor, singleton
+public:
+	static UserOptions& getInstance() { 
+		static UserOptions userOptions; // the first and only instance created.
+		return userOptions;
+	}
+	static int getSortingVer() { return sortingver;} // enabling goalcontainers to update sorting order 
+
+	UserOptions( UserOptions &a) 	= delete;// copy constructor
+	UserOptions( UserOptions &&a) 	= delete;// move constructor
+
+	UserOptions& operator=( UserOptions &a) 	= delete; // copy assignment
+	UserOptions&& operator=( UserOptions &&a) 	= delete; //move assignment
+
+	void loadFile( const std::string &fname);
+	void writeFile();
+
+	bool getVerbosity() {return verbosity;}
+	bool getPaging() { return paging; }
+
+	bool validateString( std::string candidatePrefs );
+	std::string getSortPrefs() const {return sortPrefs;}
+
+	void setVerbosity( bool newvalue ) { verbosity = newvalue; }
+	void setPaging( bool newvalue ) { paging = newvalue; }
+	void setSortPrefs(std::string newPrefs);
+	
+	friend class GoalComparator;// to avoid 3 function calls for every iteration of the comparator
+};
 
 #endif

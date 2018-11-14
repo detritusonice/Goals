@@ -39,38 +39,13 @@ enum STATE {
 	STATE_INVALID
 };
 
-//--------------------------------------------------------------------------
-
-class UserOptions {
-	bool verbosity;
-	bool paging;
-	std::string filename;
-
-	void setVerbosity( bool newvalue ) { verbosity = newvalue; }
-	void setPaging( bool newvalue ) { paging = newvalue; }
-public:
-	UserOptions():verbosity{true},paging{false} {}
-	
-	void loadFile( const std::string &fname);
-	void writeFile();
-
-	bool getVerbosity() {return verbosity;}
-	bool getPaging() { return paging; }
-
-	friend class StateMachine;
-	friend class ConfigMenu;
-#ifdef TESTING_ACTIVE
-	friend class StateTester;
-#endif //TESTING_ACTIVE
-};
-
-
 //=============================================================================
 // Base class for states of the machine
 class State {
 protected:
 	STATE stateID;
-	State( STATE id ):stateID{id}{}// accessible from derived classes only
+	State( STATE id ):stateID{id}{}
+				// accessible from derived classes only
 public:
 	virtual ~State(){}
 	virtual void display()=0;
@@ -140,7 +115,6 @@ class ConfigMenu : public State {
 	void display();
 	void input();
 	void act();
-
 	void displayOption( int optionID );
 };
 	
@@ -152,7 +126,7 @@ class StateMachine {
 	State* state; 				// the current state the machine is in
 	static STATE stateID;
 	static struct winsize ws;		// containing Linux console dimensions
-
+	static GoalContainer gc;
 
 	void setState( STATE newStateID ); 	//push current state, activate new state
 	void popState(); 			// return to previous state
@@ -176,22 +150,13 @@ class StateMachine {
 			}
 		}
 	// flags the next state for the machine to transit to		
-	static void setNextStateID( STATE newID ) {
-		stateID=newID;
-		}
+	static void setNextStateID( STATE newID ) { stateID=newID; }
+	static int termWidth() { return ws.ws_col; }
+	static int termHeight() { return ws.ws_row; }
 
-	static int termWidth() {
-		return ws.ws_col;
-	}
-
-	static int termHeight() {
-		return ws.ws_row;
-	}
+	static GoalContainer& getGC() {return gc;}
 	
 	int run(); // main loop.
-
-	void saveOptions();
-	
 
 	friend class State; // in doubt: who should own a goal container? how is access to it given?
 #ifdef TESTING_ACTIVE	

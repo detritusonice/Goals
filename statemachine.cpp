@@ -27,68 +27,19 @@
 #include "statemachine.h"
 #include <unistd.h> // for STDOUT_FILENO
 
-GoalContainer gc;// to ease access from all states, defined here to enable testing
-
-UserOptions options;			// user's display preferences	
-
 STATE StateMachine::stateID=STATE_EXIT;
 struct winsize StateMachine::ws;
-
-void UserOptions::loadFile( const std::string &fname) {
-	filename= fname;
-	try {
-		XMLParser parser{fname};
-		parser.getHeader();
-		std::string label=parser.getLabel();
-		std::string endlabel=std::string{"/"}+label;
-		label=parser.getLabel();
-		while (label !=endlabel  && parser.moreToGo()) {
-			std::string data = parser.getLeafData();
-			if (label=="verbosity")
-				options.verbosity=(data=="true");
-			else if (label=="paging")
-				options.paging = (data=="true");
-			else if (label=="sort")
-				gc.setSortPrefs(data);
-			else throw (std::runtime_error(label+" :unknown leaf label in "+fname));
-			std::string dataend{ "/"+label};
-			label = parser.getLabel();
-			if (label!=dataend)
-				throw( std::runtime_error("Error, leaf end label <"+dataend+"> missing"));
-
-			label=parser.getLabel(); // read label for the next record, or the root end
-		}
-	} catch ( std::exception &e ) {
-		std::cerr<<e.what();
-	}
-}
-
-void UserOptions::writeFile() {
-	std::cerr<<"creating options backup file "<<filename<<".bak\n";
-	system( ("cp "+filename+" "+filename+".bak -f").c_str() );
-	std::cerr<<"saving to "<<filename<<"...\n";
-	try{
-		XMLWriter writer{filename};
-		writer.writeHeader();
-		writer.openLabel("options",true); //root element
-		writer.writeLeaf("verbosity",(options.getVerbosity()?"true":"false"));
-		writer.writeLeaf("paging",(options.getPaging()?"true":"false"));
-		writer.writeLeaf("sort",gc.getSortPrefs());
-		writer.closeLabel();
-	} catch (std::exception& e) {
-		std::cerr<<"Exception caught while saving file:"<<e.what()<<"\n";
-		}
-}
+GoalContainer StateMachine::gc;
 
 void ExitMenu::display() { 
-	if (gc.isModified())
+	if (StateMachine::getGC().isModified())
 		std::cout<<"\nsave changes (yes/no):";
 	else
 		std::cout<<"No changes made to the goal records.\n";
 }
 
 void ExitMenu::input() { 
-	if (!gc.isModified())	// no changes to the goal data
+	if (!StateMachine::getGC().isModified())	// no changes to the goal data
 		return;
 	char c;
 	std::cin>>c;		// Using cin for brevity instead of std::cin.get()
@@ -103,10 +54,10 @@ void ExitMenu::input() {
 }
 
 void ExitMenu::act() {
-	if (gc.isModified()) {
+	if (StateMachine::getGC().isModified()) {
 		if (saveChanges) {
 			std::cout<<"Saving changes...";
-			gc.saveFile();
+			StateMachine::getGC().saveFile();
 			std::cout<<"done.\n";
 		}
 		else {
@@ -125,7 +76,7 @@ void MainMenu::display() {
 		nextToShow=showGoals(nextToShow);
 		refresh=false;
 	}
-	if ( options.getVerbosity() ) {
+	if ( UserOptions::getInstance().getVerbosity() ) {
 		std::cout<<"Select action: e(xit), c(onfigure output),r(efresh display),s(ort)";
 		if (nextToShow>0)
 			std::cout<<",n(ext)";
@@ -140,14 +91,14 @@ void MainMenu::display() {
 
 int MainMenu::showGoals(int firstRecord) {
 	std::cout<<"GOALS:";
-	std::cout<<std::setfill(' ')<<std::setw(73)<<"["+gc.getSortPrefs()+"]"<<'\n';
+	std::cout<<std::setfill(' ')<<std::setw(73)<<"["+UserOptions::getInstance().getSortPrefs()+"]"<<'\n';
 	std::cout<<std::setfill('=')<<std::setw(80)<<"\n";
 	std::cout<<std::setfill(' ')<<std::setw(40)<<"Name";
 	std::cout<<std::setw(12)<<"Priority"<<std::setw(12)<<"%Completed"<< std::setw(12)<<" Unit Cost\n";
 	std::cout<<std::setfill('-')<<std::setw(80)<<"\n"<<std::setfill(' ');
 
-	int res=gc.printAll(std::cout,firstRecord,
-			( options.getPaging()? std::max(1,StateMachine::termHeight()-7): 1<<30) );
+	int res=StateMachine::getGC().printAll(std::cout,firstRecord,
+			( UserOptions::getInstance().getPaging()? std::max(1,StateMachine::termHeight()-7): 1<<30) );
 	if (res==0) 
 		std::cout<<std::setfill('=')<<std::setw(80)<<"\n";
 	return res;// return next goal record to be shown
@@ -192,7 +143,7 @@ void SortMenu::input() {
 	if (newString=="-")
 		newString="";//set the empty sorting string
 
-	if (gc.validateString(newString)) {
+	if (UserOptions::getInstance().validateString(newString)) {
 		if (sortString!=newString) {
 			sortString=newString;
 			changed=true;
@@ -206,7 +157,7 @@ void SortMenu::input() {
 //Sets GoalContainer sorting Preferences string and exits when all done
 void SortMenu::act() {
 	if (changed)
-		gc.setSortPrefs(sortString);
+		UserOptions::getInstance().setSortPrefs(sortString);
 	if (done)
 		StateMachine::setNextStateID(STATE_MAINMENU);
 }
@@ -221,17 +172,17 @@ void ConfigMenu::display() {
 			toggled[i]=false;
 		}
 	}
-	std::cout<<"Configuration: b(ack), p(aging ->"<<(options.getPaging()?"off":"on");
-	std::cout<<"), v(erbose ->"<<(options.getVerbosity()?"off":"on")<<"), h(elp) :";
+	std::cout<<"Configuration: b(ack), p(aging ->"<<(UserOptions::getInstance().getPaging()?"off":"on");
+	std::cout<<"), v(erbose ->"<<(UserOptions::getInstance().getVerbosity()?"off":"on")<<"), h(elp) :";
 }	
 
 //Displays option status when user toggles some option
 void ConfigMenu::displayOption( int optionID ) {
 	switch (optionID) {
 		case CONFIG_VERBOSE:
-			std::cout<<"Verbosity is now "<<(options.getVerbosity()?"on":"off")<<"\n\n";break;
+			std::cout<<"Verbosity is now "<<(UserOptions::getInstance().getVerbosity()?"on":"off")<<"\n\n";break;
 		case CONFIG_PAGING:	
-			std::cout<<"Paging is now "<<(options.getPaging()?"on":"off")<<"\n\n";break;
+			std::cout<<"Paging is now "<<(UserOptions::getInstance().getPaging()?"on":"off")<<"\n\n";break;
 		case CONFIG_HELP:	
 			std::cout<<"Help:\n"
 "Verbosity switches wordiness in the menu prompt, when off just lists available characters\n"
@@ -241,7 +192,7 @@ void ConfigMenu::displayOption( int optionID ) {
 	}
 }
 
-//accepts input string from user and toggleds included options on and off.
+//accepts input string from user and toggleds included  options on and off.
 //will ignore unused characters and pair multiple occurences of used ones. Odd numbers toggled.
 //assuming input is lating ascii compatible
 void ConfigMenu::input() {
@@ -266,10 +217,10 @@ void ConfigMenu::input() {
 // responds to user input.
 void ConfigMenu::act() {
 	if ( toggled[CONFIG_VERBOSE] ) {
-		options.setVerbosity( !options.getVerbosity() );
+		UserOptions::getInstance().setVerbosity( !UserOptions::getInstance().getVerbosity() );
 	}
        	if ( toggled[CONFIG_PAGING]  ) {
-		options.setPaging( !options.getPaging() );
+		UserOptions::getInstance().setPaging( !UserOptions::getInstance().getPaging() );
 	}
 	if ( toggled[CONFIG_BACK]) {
 		display();// user may have also toggled some other option, show feedback
@@ -293,7 +244,7 @@ void StateMachine::setState( STATE newStateID ) {
 	State* newstate=nullptr;
 	switch (newStateID) {
 		case STATE_MAINMENU: newstate= new MainMenu{};break;
-		case STATE_SORTMENU: newstate= new SortMenu{gc.getSortPrefs()};break;
+		case STATE_SORTMENU: newstate= new SortMenu{UserOptions::getInstance().getSortPrefs()};break;
 		case STATE_CONFIGMENU: newstate= new ConfigMenu{};break;
 		default:break;
 	}
@@ -323,20 +274,10 @@ void StateMachine::queryConsoleDimensions() {
 	ioctl( STDOUT_FILENO, TIOCGWINSZ, &ws);
 }
 
-// save user configuration options
-void StateMachine::saveOptions() {
-	options.writeFile();
-}
-
-//read user's diplay and sorting options
-void readOptions() {
-	options.loadFile("options.xml");
-}
-
 // state machine's main loop
 int StateMachine::run() {
 	bool done=false;
-	readOptions();
+	UserOptions::getInstance().loadFile("options.xml");
 	try {
 		gc.loadFile("goals.xml");
 	} catch( std::exception &e) {
@@ -350,14 +291,15 @@ int StateMachine::run() {
 		setState(stateID);
 		if (state==nullptr) popState(); 
 
-		if (options.getPaging())
+		if (UserOptions::getInstance().getPaging())
 			queryConsoleDimensions();
+		gc.sortGoals(); // will sort only when the sorting preference string has been changed
 		//std::cerr<<"Terminal Dimensions: "<<termHeight()<<" rows x "<<termWidth()<<" columns\n";
 
 		state->display();
 		state->input();
 		state->act();
 	}
-	saveOptions();
+	UserOptions::getInstance().writeFile();
 	return 0;
 }

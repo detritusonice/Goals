@@ -113,16 +113,16 @@ TEST( GoalContainer, openfile ) {
 // test acceptance of sort strings, valid or not
 TEST( GoalContainer, validateString ) {
 	GoalContainer gc;
-	ASSERT_EQ( gc.validateString(""),true);		//valid, empty sorting options
-	ASSERT_EQ( gc.validateString("na"),true);	//valid, name ascending
-	ASSERT_EQ( gc.validateString("napacdud"),true); //valid, max length, all fields
-	ASSERT_EQ( gc.validateString("NA"),true);	//valid, uppercase version
-	ASSERT_EQ( gc.validateString("1d"),false);	//invalid, nonalpha character
-	ASSERT_EQ( gc.validateString("nap"),false);	//invalid, odd length
-	ASSERT_EQ( gc.validateString("nana"),false);	//invlaid, repetition of field
-	ASSERT_EQ( gc.validateString("napacdudna"),false); //invalid, too long
-	ASSERT_EQ( gc.validateString("nk"),false);	//invalid, inappropriate order character
-	ASSERT_EQ( gc.validateString("za"),false);	//invalid, inappropriate field character
+	ASSERT_EQ( UserOptions::getInstance().validateString(""),true);		//valid, empty sorting options
+	ASSERT_EQ( UserOptions::getInstance().validateString("na"),true);	//valid, name ascending
+	ASSERT_EQ( UserOptions::getInstance().validateString("napacdud"),true); //valid, max length, all fields
+	ASSERT_EQ( UserOptions::getInstance().validateString("NA"),true);	//valid, uppercase version
+	ASSERT_EQ( UserOptions::getInstance().validateString("1d"),false);	//invalid, nonalpha character
+	ASSERT_EQ( UserOptions::getInstance().validateString("nap"),false);	//invalid, odd length
+	ASSERT_EQ( UserOptions::getInstance().validateString("nana"),false);	//invlaid, repetition of field
+	ASSERT_EQ( UserOptions::getInstance().validateString("napacdudna"),false); //invalid, too long
+	ASSERT_EQ( UserOptions::getInstance().validateString("nk"),false);	//invalid, inappropriate order character
+	ASSERT_EQ( UserOptions::getInstance().validateString("za"),false);	//invalid, inappropriate field character
 }
 
 
@@ -190,12 +190,7 @@ TEST( GoalContainer, saveFile ) {
 void testOrder( std::vector<int> *sorted, std::vector<int> *reference) {
 	ASSERT_TRUE( sorted !=nullptr );
 	ASSERT_TRUE( reference !=nullptr);
-
 	ASSERT_EQ( sorted->size(), reference->size() );
-
-	//for (int i=0;i<sorted->size();++i)
-	//	ASSERT_EQ( (*sorted)[i], (*reference)[i]);
-
 	ASSERT_TRUE( *sorted == *reference ); // use STL's comparison
 }
 
@@ -205,8 +200,9 @@ TEST( GoalContainer, sort ) {
 	GoalTester tester(&gc);
 
 	tester.loadFile("goalsample.xml");
-	gc.setSortPrefs("na");
-	ASSERT_EQ( "na", gc.getSortPrefs() );
+	UserOptions::getInstance().setSortPrefs("na");
+	gc.sortGoals();
+	ASSERT_EQ( "na", UserOptions::getInstance().getSortPrefs() );
 
 	std::vector<int> *sorted= tester.getSortedVector();
 	ASSERT_TRUE( sorted !=nullptr );
@@ -217,23 +213,28 @@ TEST( GoalContainer, sort ) {
 		ASSERT_TRUE( comp( (*sorted)[i], (*sorted)[i+1]));
 	
 	std::vector<int> reference{0,1,2};// as read from file
-	gc.setSortPrefs("");		// should disable sorting, ie kepp file order	
+	UserOptions::getInstance().setSortPrefs("");		// should disable sorting, ie kepp file order	
+	gc.sortGoals();
 	testOrder( sorted, &reference);
 
 	reference={1,2,0};
-	gc.setSortPrefs("na"); //ascending by name
+	UserOptions::getInstance().setSortPrefs("na"); //ascending by name
+	gc.sortGoals();
 	testOrder( sorted, &reference);
 
 	reference={2,0,1};
-	gc.setSortPrefs("cd"); //descending by completion
+	UserOptions::getInstance().setSortPrefs("cd"); //descending by completion
+	gc.sortGoals();
 	testOrder( sorted, &reference);
 	
 	reference={0,2,1};
-	gc.setSortPrefs("nd"); // descending by name
+	UserOptions::getInstance().setSortPrefs("nd"); // descending by name
+	gc.sortGoals();
 	testOrder( sorted, &reference);
 
 	reference={2,0,1};
-	gc.setSortPrefs("uacd"); //ascending by unit cost, then descending by completion
+	UserOptions::getInstance().setSortPrefs("uacd"); //ascending by unit cost, then descending by completion
+	gc.sortGoals();
 	testOrder( sorted, &reference);
 
 	sorted=nullptr;
@@ -310,6 +311,12 @@ TEST( StateMachine, autoPop ) {
 	ASSERT_EQ( tester.getStateVector()->size(), 0);// popped
 	ASSERT_EQ( tester.getCurrentStateID(), STATE_EXITMENU );//correct current state
 }
+/*
+TEST( UserOptions, loadOptions ) {
+UserOptions::getInstance().loadFile("sampleoptions.xml");	
+	UserOptions::getInstance().setVerbosity(false);
+	UserOptions::getInstance().setPaging(true);
+*/
 
 int main(int argc, char **argv) {
 	::testing::InitGoogleTest(&argc, argv);

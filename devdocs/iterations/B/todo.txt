@@ -15,8 +15,8 @@ IT Main menu
 	IT UserOptions class, store mainmenu verbosity, console size consideration 
 		and sorting preferences
 	IT read and write xml settings file, saving a copy of the original DONE
-	IT decouple XML declarations from goal related ones
-	IT separate xml writing from knowledge of structures if beneficial DONE*
+	IT decouple XML declarations from goal related ones		   DONE
+	IT separate xml writing from knowledge of structures if beneficial DONE
 
 *=Iteration C:
 *IT Insert option

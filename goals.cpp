@@ -26,7 +26,7 @@
 #include <algorithm>
 #include "goals.h"
 
-
+int UserOptions::sortingver=0;//static, sorting string version during this run
 
 std::ostream& operator <<( std::ostream& out, const Goal &goal) {
 	return goal.print(out);
@@ -91,7 +91,7 @@ bool GoalContainer::saveFile() {
 			writer.writeHeader();
 			writer.openLabel("goalkeeper",true); //root element
 			for (auto& goal:v)
-				writer.writeGoal(goal);
+				writeGoal( writer,goal);
 			writer.closeLabel();
 		} catch (std::exception& e) {
 			std::cerr<<"Exception caught while saving file:"<<e.what()<<"\n";
@@ -129,9 +129,122 @@ Goal GoalContainer::readGoal( XMLParser &parser, std::string &label) {
 	return goal;
 }
 
+//write a whole goal entry
+
+void GoalContainer::writeGoal( XMLWriter& writer, const Goal& goal) {
+	static char buf[30];
+	writer.openLabel("goal",true);
+	writer.writeLeaf("name",goal.name);
+	writer.writeLeaf("priority",std::to_string(goal.priority));
+	writer.writeLeaf("completion",std::to_string(goal.completion));
+
+	sprintf(buf,"%.2lf",goal.unitcost);
+
+	writer.writeLeaf("unitcost",buf);
+	writer.closeLabel();// goal
+}
+
+// Estblishes the new order of v's indices based on the new sorting string
+// by utilizing a recursive comparator
+// Note: may be called after an insert or deletion so re-creating the sorted vector is necessary
+
+void GoalContainer::sortGoals() {
+	if (sortver==UserOptions::getInstance().getSortingVer())
+		return;
+	sorted.clear();		//contains the sequence of indices of v, when properly ordered
+	sorted.resize(v.size());
+	for (int i=0;i<v.size();i++)
+		sorted[i]=i;
+	GoalComparator comp{this}; // build a comparator object to act on this container
+	std::sort(sorted.begin(),sorted.end(),comp);
+	sortver=UserOptions::getInstance().getSortingVer();
+}
+// comparator objects function operator, to be called recursively from std::sort and work based on depth and 
+// comparison preferences string in GoalContainer
+// Note: using a static to mark recursive use of the sorting string
+
+bool GoalComparator::operator()( const int &a, const int &b ) {
+	static int depth=0;	//progressing by pair of characters 
+	
+	if (depth==UserOptions::getInstance().sortPrefs.length()) 	// no remaining sort fields, 
+		return a<b;			//return physical file order of records 
+	char c=UserOptions::getInstance().sortPrefs[depth];
+	char o=UserOptions::getInstance().sortPrefs[depth+1];
+	bool lt,eq; 
+	switch (c) {
+		case 'n': lt=( gc->v[a].name < gc->v[b].name );
+			  eq=( gc->v[a].name == gc->v[b].name ); 
+			  break;
+		case 'p': lt=( gc->v[a].priority < gc->v[b].priority );
+			  eq=( gc->v[a].priority == gc->v[b].priority ); 
+			  break;
+		case 'c': lt=( gc->v[a].completion < gc->v[b].completion );
+			  eq=( gc->v[a].completion == gc->v[b].completion ); 
+			  break;
+		case 'u': lt=( gc->v[a].unitcost < gc->v[b].unitcost );
+			  eq=( gc->v[a].unitcost == gc->v[b].unitcost ); 
+			  break;
+	} 
+	if (eq) {			//fields are equal
+		depth+=2;		// mark next field, if one exists
+		bool res=(*this)(a,b);	//recursive call for the next field
+		depth-=2;
+		return res;
+	} 
+	return ( (o=='a')?lt:!lt);	//can be ordered based on this field, <less than> holds.
+}
+
+//Load user display and sort options
+void UserOptions::loadFile( const std::string &fname) {
+	filename= fname;
+	try {
+		XMLParser parser{fname};
+		parser.getHeader();
+		std::string label=parser.getLabel();
+		std::string endlabel=std::string{"/"}+label;
+		label=parser.getLabel();
+		while (label !=endlabel  && parser.moreToGo()) {
+			std::string data = parser.getLeafData();
+			if (label=="verbosity")
+				verbosity=(data=="true");
+			else if (label=="paging")
+				paging = (data=="true");
+			else if (label=="sort")
+				setSortPrefs(data);
+			else throw (std::runtime_error(label+" :unknown leaf label in "+fname));
+			std::string dataend{ "/"+label};
+			label = parser.getLabel();
+			if (label!=dataend)
+				throw( std::runtime_error("Error, leaf end label <"+dataend+"> missing"));
+
+			label=parser.getLabel(); // read label for the next record, or the root end
+		}
+	} catch ( std::exception &e ) {
+		std::cerr<<e.what();
+	}
+}
+
+// Write user options to xml file after creating a backup of the original
+void UserOptions::writeFile() {
+	std::cerr<<"creating options backup file "<<filename<<".bak\n";
+	system( ("cp "+filename+" "+filename+".bak -f").c_str() );
+	std::cerr<<"saving to "<<filename<<"...\n";
+	try{
+		XMLWriter writer{filename};
+		writer.writeHeader();
+		writer.openLabel("options",true); //root element
+		writer.writeLeaf("verbosity",(verbosity?"true":"false"));
+		writer.writeLeaf("paging",(paging?"true":"false"));
+		writer.writeLeaf("sort",sortPrefs);
+		writer.closeLabel();
+	} catch (std::exception& e) {
+		std::cerr<<"Exception caught while saving file:"<<e.what()<<"\n";
+		}
+}
+
 // called to validate the format of a candidate string of sorting preferences
 
-bool GoalContainer::validateString( std::string candidatePrefs) {
+bool UserOptions::validateString( std::string candidatePrefs) {
 	if (candidatePrefs.length()&1) 
 		return false;		// no odd length accepted. field-order pairs only
 	if (candidatePrefs.length()>8)
@@ -170,57 +283,12 @@ bool GoalContainer::validateString( std::string candidatePrefs) {
 // Prerequisites: sorting string must be valid.
 // 		  the new string is presumably checked to be different than the previous one
 
-void GoalContainer::setSortPrefs(std::string newPrefs) {
+void UserOptions::setSortPrefs(std::string newPrefs) {
 	for(auto &c:newPrefs)
 		c=std::tolower(c);// must be lowercase to avoid unnecessary complexity
-	sortPrefs=newPrefs; // string must be valid
-	sortGoals();
+	if (validateString(newPrefs)) {
+		sortPrefs=newPrefs; // string must be valid
+		sortingver++; // indicate that re-sorting will be necessary
+	}
 }
 
-// Estblishes the new order of v's indices based on the new sorting string
-// by utilizing a recursive comparator
-// Note: may be called after an insert or deletion so re-creating the sorted vector is necessary
-
-void GoalContainer::sortGoals() {
-	sorted.clear();		//contains the sequence of indices of v, when properly ordered
-	sorted.resize(v.size());
-	for (int i=0;i<v.size();i++)
-		sorted[i]=i;
-	GoalComparator comp{this}; // build a comparator object to act on this container
-	std::sort(sorted.begin(),sorted.end(),comp);
-}
-
-// comparator objects function operator, to be called recursively from std::sort and work based on depth and 
-// comparison preferences string in GoalContainer
-// Note: using a static to mark recursive use of the sorting string
-
-bool GoalComparator::operator()( const int &a, const int &b ) {
-	static int depth=0;	//progressing by pair of characters 
-	
-	if (depth==gc->sortPrefs.length()) 	// no remaining sort fields, 
-		return a<b;			//return physical file order of records 
-	char c=gc->sortPrefs[depth];
-	char o=gc->sortPrefs[depth+1];
-	bool lt,eq; 
-	switch (c) {
-		case 'n': lt=( gc->v[a].name < gc->v[b].name );
-			  eq=( gc->v[a].name == gc->v[b].name ); 
-			  break;
-		case 'p': lt=( gc->v[a].priority < gc->v[b].priority );
-			  eq=( gc->v[a].priority == gc->v[b].priority ); 
-			  break;
-		case 'c': lt=( gc->v[a].completion < gc->v[b].completion );
-			  eq=( gc->v[a].completion == gc->v[b].completion ); 
-			  break;
-		case 'u': lt=( gc->v[a].unitcost < gc->v[b].unitcost );
-			  eq=( gc->v[a].unitcost == gc->v[b].unitcost ); 
-			  break;
-	} 
-	if (eq) {			//fields are equal
-		depth+=2;		// mark next field, if one exists
-		bool res=(*this)(a,b);	//recursive call for the next field
-		depth-=2;
-		return res;
-	} 
-	return ( (o=='a')?lt:!lt);	//can be ordered based on this field, <less than> holds.
-}
