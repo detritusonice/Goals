@@ -142,19 +142,17 @@ class GoalTester{
 	}
 
 	bool getModified() {return gc->modifiedGoals;}
-
 	void setModified( bool val) { gc->modifiedGoals=val;}
 
 	std::string getFilename() { return gc->filename;}
-
 	void setFilename( const std::string& newname ) { gc->filename=newname;}//no error checking
 
 	std::vector<Goal>* getGoalVector() { return &gc->v;}
-
 	std::vector<int>* getSortedVector() { return &gc->sorted;}
 	
 	bool isModified() { return gc->isModified();}
 	size_t getSize() {return gc->size();}
+
 	int loadFile (const std::string &name) { return gc->loadFile(name);}
 	bool saveFile() { return gc->saveFile();}
 };
@@ -172,7 +170,7 @@ TEST( GoalContainer, saveFile ) {
 
 	GoalContainer gc2;
 	GoalTester tester2(&gc2);
-	tester2.loadFile("goalSaved.xml");
+	tester2.loadFile("goalSaved.xml"); // both gc's use the same UserOptions
 
 	std::vector<Goal> *v1, *v2;
 	v1=tester.getGoalVector();
@@ -198,11 +196,13 @@ void testOrder( std::vector<int> *sorted, std::vector<int> *reference) {
 TEST( GoalContainer, sort ) {
 	GoalContainer gc;
 	GoalTester tester(&gc);
+	int ver=UserOptions::getInstance().getSortingVer();
 
 	tester.loadFile("goalsample.xml");
 	UserOptions::getInstance().setSortPrefs("na");
 	gc.sortGoals();
 	ASSERT_EQ( "na", UserOptions::getInstance().getSortPrefs() );
+	ASSERT_EQ(UserOptions::getInstance().getSortingVer(),++ver);
 
 	std::vector<int> *sorted= tester.getSortedVector();
 	ASSERT_TRUE( sorted !=nullptr );
@@ -216,26 +216,31 @@ TEST( GoalContainer, sort ) {
 	UserOptions::getInstance().setSortPrefs("");		// should disable sorting, ie kepp file order	
 	gc.sortGoals();
 	testOrder( sorted, &reference);
+	ASSERT_EQ(UserOptions::getInstance().getSortingVer(),++ver);
 
 	reference={1,2,0};
 	UserOptions::getInstance().setSortPrefs("na"); //ascending by name
 	gc.sortGoals();
 	testOrder( sorted, &reference);
+	ASSERT_EQ(UserOptions::getInstance().getSortingVer(),++ver);
 
 	reference={2,0,1};
 	UserOptions::getInstance().setSortPrefs("cd"); //descending by completion
 	gc.sortGoals();
 	testOrder( sorted, &reference);
+	ASSERT_EQ(UserOptions::getInstance().getSortingVer(),++ver);
 	
 	reference={0,2,1};
 	UserOptions::getInstance().setSortPrefs("nd"); // descending by name
 	gc.sortGoals();
 	testOrder( sorted, &reference);
+	ASSERT_EQ(UserOptions::getInstance().getSortingVer(),++ver);
 
 	reference={2,0,1};
 	UserOptions::getInstance().setSortPrefs("uacd"); //ascending by unit cost, then descending by completion
 	gc.sortGoals();
 	testOrder( sorted, &reference);
+	ASSERT_EQ(UserOptions::getInstance().getSortingVer(),++ver);
 
 	sorted=nullptr;
 }
@@ -311,12 +316,25 @@ TEST( StateMachine, autoPop ) {
 	ASSERT_EQ( tester.getStateVector()->size(), 0);// popped
 	ASSERT_EQ( tester.getCurrentStateID(), STATE_EXITMENU );//correct current state
 }
-/*
-TEST( UserOptions, loadOptions ) {
-UserOptions::getInstance().loadFile("sampleoptions.xml");	
+
+TEST( UserOptions, saveLoadOptions ) {
+	int ver=UserOptions::getInstance().getSortingVer();
+	UserOptions::getInstance().loadFile("sampleoptions.xml");	
+	ASSERT_EQ( UserOptions::getInstance().getSortingVer(),ver+1);// loadFile uses setSortPrefs once
+
 	UserOptions::getInstance().setVerbosity(false);
 	UserOptions::getInstance().setPaging(true);
-*/
+	UserOptions::getInstance().setSortPrefs("uacd");
+	ASSERT_EQ( UserOptions::getInstance().getSortingVer(),ver+2);// following explicit call
+
+	UserOptions::getInstance().writeFile();
+
+	UserOptions::getInstance().loadFile("sampleoptions.xml");
+	ASSERT_EQ( UserOptions::getInstance().getVerbosity(),false);
+	ASSERT_EQ( UserOptions::getInstance().getPaging(),true);
+	ASSERT_EQ( UserOptions::getInstance().getSortPrefs(),"uacd");
+	ASSERT_EQ( UserOptions::getInstance().getSortingVer(),ver+3); // one more indirect setSortPrefs
+}
 
 int main(int argc, char **argv) {
 	::testing::InitGoogleTest(&argc, argv);
