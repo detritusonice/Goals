@@ -1,0 +1,25 @@
+IT = implement and test to 100%
+
+IT MainMenu:
+	Show record number before goal record.
+	ConfigOptions: Option to show record numbers in main menu.
+
+IT Delete option
+	Delete record by record ID.
+
+IT Insert option
+	IT user inserts the fields, reviews and accepts, rejects, 
+		or selects field for modification, until acceptance or rejection.
+IT Modify option
+	Modify record by record ID. show options for editing fields like insert modify.
+
+IT Search option
+	by field, one at a time as search criterion, by entering a substring of name, of
+		an exact number for numeric fields
+	OR
+	by sort order ID, e.g. the 3d record as they are displayed.
+
+IT GoalContainer:
+	Sort should have effect on the displayed records, either full file list
+		or search results.
+	Option in main menu to abandon search results and reset display

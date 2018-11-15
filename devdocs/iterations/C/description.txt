@@ -1,0 +1,38 @@
+Goals Iteration C description file
+
+Iteration starting Fri 16/Nov/2018
+
+With result of Iteration B as basis, extend app to:
+		A. Optionally display record number in the diplayed order. 
+
+		B. Enable the user to delete a goal record in memory by entering its number.
+
+		C. Enable the user to modify an existing record in memory, selected by record ID. 
+
+		D. Offer the ability to insert a new record, by entering each field,
+			then check for name clashes, and let the user review and edit
+			the new record until satisfied. Offer option to accept(default)
+			or reject the new record. 
+
+		E. Search capability, based on one field: 
+			a partial name match, or an exact numerical match.
+
+		F. Main menu should display the search results sorted based on sorting Preferences,
+			and offer the option to reset to full record list.
+ 
+		G. Record id will not be global, but based on the current displayed goal list. 
+
+		H. Record changes performed during a session will be made permanent upon program exit
+			and only if the user instructs so.
+
+		I. Search criteria and record IDs will not be stored in any way between sessions.
+
+		J. Newly inserted records will be added to the end of the respective file upon saving.
+
+		K.100% tests passed, tests fully covering functionality.
+
+Iteration Duration: 3 weeks of 2 hours per day as best case scenario.
+
+Iteration C initiation is tagged Iter_C_Start
+Iteration C end wil be tagged Iter_C_End
+
