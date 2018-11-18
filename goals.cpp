@@ -51,8 +51,10 @@ int GoalContainer::printAll(std::ostream& strm,int first, int maxToPrint) const 
 
 int GoalContainer::loadFile( const std::string &name) {
 	v.clear();
+	active.clear();
 	filename= name;//store the filename of the container's records for saving
 	std::set<Goal> gs;
+	int id=0;
 	try {
 
 		XMLParser parser{name};
@@ -65,9 +67,10 @@ int GoalContainer::loadFile( const std::string &name) {
 				Goal goal= readGoal(parser,label);//given the label, load the struct
 				
 				auto res=gs.insert(goal);
-				if ( res.first!=gs.end() && res.second ) // succeeded, not a duplicate
-					v.push_back(goal);	//only load unique records, keep initial order
-
+				if ( res.first!=gs.end() && res.second ) { // succeeded, not a duplicate
+					v.push_back(goal);	//unique records, keep initial order
+					active.insert( active.end(),id++); //hint insert at the end
+				}
 				label = parser.getLabel();//read the next label
 			}
 			else throw(std::runtime_error("Entries of a different type detected"));
@@ -93,8 +96,9 @@ bool GoalContainer::saveFile() {
 			XMLWriter writer{filename};
 			writer.writeHeader();
 			writer.openLabel("goalkeeper",true); //root element
-			for (auto& goal:v)
-				writeGoal( writer,goal);
+
+			for (auto idx:active) //skip the deleted records
+				writeGoal( writer,v[idx]);
 			writer.closeLabel();
 		} catch (std::exception& e) {
 			std::cerr<<"Exception caught while saving file:"<<e.what()<<"\n";
@@ -152,16 +156,18 @@ void GoalContainer::writeGoal( XMLWriter& writer, const Goal& goal) {
 // Note: may be called after an insert or deletion so re-creating the sorted vector is necessary
 
 void GoalContainer::sortGoals() {
-	if (sortver==UserOptions::getInstance().getSortingVer())
+	if ( !refreshSort  &&  sortver==UserOptions::getInstance().getSortingVer())//no reordering needed
 		return;
-	sorted.clear();		//contains the sequence of indices of v, when properly ordered
-	sorted.resize(v.size());
-	for (int i=0;i<v.size();i++)
-		sorted[i]=i;
+	sorted.clear();		//will contains the sequence of indices of live goals in v, 
+				//when properly ordered
+	for (int idx:active) 
+		sorted.push_back(idx);
 	GoalComparator comp{this}; // build a comparator object to act on this container
 	std::sort(sorted.begin(),sorted.end(),comp);
 	sortver=UserOptions::getInstance().getSortingVer();
+	refreshSort=false;
 }
+
 // comparator objects function operator, to be called recursively from std::sort and work based on depth and 
 // comparison preferences string in GoalContainer
 // Note: using a static to mark recursive use of the sorting string

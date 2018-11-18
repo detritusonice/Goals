@@ -1,5 +1,6 @@
 // GOALS.H
-// function declarations and class interfaces
+// class declarations of Goals, GoalContainer, GoalComparator,
+// 			 XMLParser, XMLWriter and UserOptions 
 // for the Goals application.
 // Copyright 2018 Thanasis Karpetis
 //
@@ -29,6 +30,7 @@
 #include <vector>
 #include <fstream>
 #include <iomanip>
+#include <set>
 
 class XMLParser;
 class XMLWriter;
@@ -69,11 +71,18 @@ std::ostream& operator <<( std::ostream& out, const Goal& goal);
 class GoalContainer {
 	bool modifiedGoals;
 	std::string filename;
-	std::vector<Goal> v;	// Goal records in raw order as read from file
+	std::vector<Goal> v;	// Unique storage of Goal records in raw order as read from file
+				// additions and modifications are stored in this vector
+
+	std::set<int> active;	// contains indices of v which are not deleted. Used as base for search
+//	std::set<int> searchRes; // active indices of v which are included in search results. Used as
+				 // base for 'sorted' initialisation. 
+
 	std::vector<int> sorted;// will contain the proper order of v's indices when sorted
 	int sortver;
+	bool refreshSort; //any modification will raise this flag to signify need to refresh ordering.
  public:
-	GoalContainer():modifiedGoals{false},sortver{-1} {}
+	GoalContainer():modifiedGoals{false},sortver{-1},refreshSort{true} {}
 
 	int printAll( std::ostream &strm,int first=0,int maxToPrint=1000) const;
 

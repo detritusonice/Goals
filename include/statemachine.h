@@ -35,7 +35,7 @@ enum STATE {
 	STATE_EXITMENU,
 	STATE_MAINMENU,
 	STATE_SORTMENU,
-	STATE_CONFIGMENU,
+	STATE_OPTIONSMENU,
 	STATE_INVALID
 };
 
@@ -101,18 +101,18 @@ class SortMenu : public State {
 	
 //=============================================================================
 
-class ConfigMenu : public State {
+class OptionsMenu : public State {
 	enum {
-		CONFIG_BACK,
-		CONFIG_PAGING,
-		CONFIG_VERBOSE,
-		CONFIG_NUMBERS,
-		CONFIG_HELP,
-		NUM_CONFIG_OPTIONS
+		OPTION_BACK,
+		OPTION_PAGING,
+		OPTION_VERBOSE,
+		OPTION_NUMBERS,
+		OPTION_HELP,
+		NUM_OPTIONS
 	};
-	bool toggled[NUM_CONFIG_OPTIONS];
+	bool toggled[NUM_OPTIONS];
  public:
-	ConfigMenu():State{STATE_CONFIGMENU},toggled{false}{}
+	OptionsMenu():State{STATE_OPTIONSMENU},toggled{false}{}
 	void display();
 	void input();
 	void act();

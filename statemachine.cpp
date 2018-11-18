@@ -77,12 +77,12 @@ void MainMenu::display() {
 		refresh=false;
 	}
 	if ( UserOptions::getInstance().getVerbosity() ) {
-		std::cout<<"Select action: e(xit), c(onfigure output),r(efresh display),s(ort)";
+		std::cout<<"Select action: e(xit), o(ptions), r(efresh), s(ort)";
 		if (nextToShow>0)
 			std::cout<<",n(ext)";
 	}
 	else {
-		std::cout<<"e,q,c,r,s";
+		std::cout<<"e,q,o,r,s";
 		if (nextToShow>0)
 			std::cout<<",n";
 	}
@@ -120,7 +120,7 @@ void MainMenu::act() {
 		case 'n': if (nextToShow>0) 	//this refreshes only if more records exist
 		case 'r': refresh=true;break;
 
-		case 'c': StateMachine::setNextStateID(STATE_CONFIGMENU);break;
+		case 'o': StateMachine::setNextStateID(STATE_OPTIONSMENU);break;
 		case 's': StateMachine::setNextStateID(STATE_SORTMENU);break;
 		case 't': StateMachine::setNextStateID(STATE_EXIT);break;
 		case 'x': throw(std::runtime_error{"YOU TERMINATED ME!!!"});break;
@@ -167,28 +167,28 @@ void SortMenu::act() {
 //--------------------------------------------------------------------------------
 // Displays configuration menu and user feedback upon option toggling.
 // Side-effect: resets toggled status to false, to prepare for next user choice
-void ConfigMenu::display() {
-	for (int i=0;i<NUM_CONFIG_OPTIONS;i++) {
+void OptionsMenu::display() {
+	for (int i=0;i<NUM_OPTIONS;i++) {
 		if (toggled[i]) {
 			displayOption(i);
 			toggled[i]=false;
 		}
 	}
-	std::cout<<"Configuration: b(ack), p(aging ->"<<(UserOptions::getInstance().getPaging()?"off":"on");
+	std::cout<<"Options: b(ack), p(aging ->"<<(UserOptions::getInstance().getPaging()?"off":"on");
 	std::cout<<"), v(erbose ->"<<(UserOptions::getInstance().getVerbosity()?"off":"on")<<"), ";
 	std::cout<<" n(umbers) ->"<<(UserOptions::getInstance().getShowNum()?"off":"on")<<") h(elp) :";
 }	
 
 //Displays option status when user toggles some option
-void ConfigMenu::displayOption( int optionID ) {
+void OptionsMenu::displayOption( int optionID ) {
 	switch (optionID) {
-		case CONFIG_VERBOSE:
+		case OPTION_VERBOSE:
 			std::cout<<"Verbosity is now "<<(UserOptions::getInstance().getVerbosity()?"on":"off")<<"\n\n";break;
-		case CONFIG_PAGING:	
+		case OPTION_PAGING:	
 			std::cout<<"Paging is now "<<(UserOptions::getInstance().getPaging()?"on":"off")<<"\n\n";break;
-		case CONFIG_NUMBERS:	
+		case OPTION_NUMBERS:	
 			std::cout<<"Record Numbering is now "<<(UserOptions::getInstance().getShowNum()?"on":"off")<<"\n\n";break;
-		case CONFIG_HELP:	
+		case OPTION_HELP:	
 			std::cout<<"Help:\n"
 "Verbosity switches wordiness in the menu prompt, when off just lists available characters\n"
 "Paging switches taking into acount the terminal size and splitting Goals list into pages\n"
@@ -201,7 +201,7 @@ void ConfigMenu::displayOption( int optionID ) {
 //accepts input string from user and toggleds included  options on and off.
 //will ignore unused characters and pair multiple occurences of used ones. Odd numbers toggled.
 //assuming input is lating ascii compatible
-void ConfigMenu::input() {
+void OptionsMenu::input() {
 	std::string optionString;
 	while ( optionString.empty() )
 		std::getline( std::cin, optionString );
@@ -214,25 +214,25 @@ void ConfigMenu::input() {
 		c=std::tolower(c);
 		status[c-'a']=!status[c-'a'];
 	}
-	toggled[CONFIG_BACK]	= status['b'-'a'];
-	toggled[CONFIG_VERBOSE] = status['v'-'a'];
-	toggled[CONFIG_PAGING]	= status['p'-'a'];
-	toggled[CONFIG_NUMBERS] = status['n'-'a'];
-	toggled[CONFIG_HELP]	= status['h'-'a'];
+	toggled[OPTION_BACK]	= status['b'-'a'];
+	toggled[OPTION_VERBOSE] = status['v'-'a'];
+	toggled[OPTION_PAGING]	= status['p'-'a'];
+	toggled[OPTION_NUMBERS] = status['n'-'a'];
+	toggled[OPTION_HELP]	= status['h'-'a'];
 }
 
 // responds to user input.
-void ConfigMenu::act() {
-	if ( toggled[CONFIG_VERBOSE] ) {
+void OptionsMenu::act() {
+	if ( toggled[OPTION_VERBOSE] ) {
 		UserOptions::getInstance().setVerbosity( !UserOptions::getInstance().getVerbosity() );
 	}
-       	if ( toggled[CONFIG_PAGING]  ) {
+       	if ( toggled[OPTION_PAGING]  ) {
 		UserOptions::getInstance().setPaging( !UserOptions::getInstance().getPaging() );
 	}
-       	if ( toggled[CONFIG_NUMBERS]  ) {
+       	if ( toggled[OPTION_NUMBERS]  ) {
 		UserOptions::getInstance().setShowNum( !UserOptions::getInstance().getShowNum() );
 	}
-	if ( toggled[CONFIG_BACK]) {
+	if ( toggled[OPTION_BACK]) {
 		display();// user may have also toggled some other option, show feedback
 		StateMachine::setNextStateID(STATE_MAINMENU);
 	}
@@ -255,7 +255,7 @@ void StateMachine::setState( STATE newStateID ) {
 	switch (newStateID) {
 		case STATE_MAINMENU: newstate= new MainMenu{};break;
 		case STATE_SORTMENU: newstate= new SortMenu{UserOptions::getInstance().getSortPrefs()};break;
-		case STATE_CONFIGMENU: newstate= new ConfigMenu{};break;
+		case STATE_OPTIONSMENU: newstate= new OptionsMenu{};break;
 		default:break;
 	}
 	if (newstate!=nullptr) {
