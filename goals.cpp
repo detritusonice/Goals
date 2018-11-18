@@ -38,8 +38,11 @@ int GoalContainer::printAll(std::ostream& strm,int first, int maxToPrint) const 
 		if (sorted.empty()) 
 			return 0;
 		int idx;
-		for ( idx = first; idx < sorted.size() && idx < first + maxToPrint; idx++ )
+		for ( idx = first; idx < sorted.size() && idx < first + maxToPrint; idx++ ) {
+			if (UserOptions::getInstance().getShowNum() ) 
+				std::cout<<std::setfill(' ')<<std::setw(4)<<idx+1<<".";
 			v[sorted[idx]].print(strm);
+		}
 		return idx%sorted.size(); 
 	}
 
@@ -84,7 +87,7 @@ bool GoalContainer::saveFile() {
 	if ( isModified() ) {
 		std::cerr<<"creating backup file "<<filename<<".bak\n";
 		system( ("cp "+filename+" "+filename+".bak -f").c_str() );
-		std::cerr<<"saving to "<<filename<<"...";
+		std::cerr<<"saving to "<<filename<<"...\n";
 		//create backup
 		try{
 			XMLWriter writer{filename};
@@ -209,6 +212,8 @@ void UserOptions::loadFile( const std::string &fname) {
 				verbosity=(data=="true");
 			else if (label=="paging")
 				paging = (data=="true");
+			else if (label=="numbers")
+				showNumbers = ( data == "true" );
 			else if (label=="sort")
 				setSortPrefs(data);
 			else throw (std::runtime_error(label+" :unknown leaf label in "+fname));
@@ -235,6 +240,7 @@ void UserOptions::writeFile() {
 		writer.openLabel("options",true); //root element
 		writer.writeLeaf("verbosity",(verbosity?"true":"false"));
 		writer.writeLeaf("paging",(paging?"true":"false"));
+		writer.writeLeaf("numbers",(showNumbers?"true":"false"));
 		writer.writeLeaf("sort",sortPrefs);
 		writer.closeLabel();
 	} catch (std::exception& e) {

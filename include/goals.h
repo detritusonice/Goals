@@ -48,7 +48,7 @@ public://just temporary, until gettors and settors are in place
 	
 	std::ostream& print( std::ostream &strm ) const {
 		strm<<std::setfill(' ')<<std::setw(40)<<name;
-		strm<<std::setw(12)<<priority<<std::setw(12)<<completion<<std::setw(7)<<""<<unitcost<<'\n';
+		strm<<std::setw(9)<<priority<<std::setw(12)<<completion<<std::setw(7)<<""<<unitcost<<'\n';
 		return strm;
 	}
 
@@ -151,11 +151,12 @@ class XMLWriter {
 class UserOptions {
 	bool verbosity;
 	bool paging;
+	bool showNumbers;
 	std::string sortPrefs;  // field-order pairs, in lowercase. used by comparator object
 	std::string filename;
 	static int sortingver;// will increase to indicate a new sorting string set.
 
-	UserOptions():verbosity{true},paging{false},sortPrefs{""} {} //private constructor, singleton
+	UserOptions():verbosity{true},paging{false},showNumbers{false},sortPrefs{""} {} //private constructor, singleton
 public:
 	static UserOptions& getInstance() { 
 		static UserOptions userOptions; // the first and only instance created.
@@ -174,12 +175,14 @@ public:
 
 	bool getVerbosity() {return verbosity;}
 	bool getPaging() { return paging; }
+	bool getShowNum() { return showNumbers; }
 
 	bool validateString( std::string candidatePrefs );
 	std::string getSortPrefs() const {return sortPrefs;}
 
 	void setVerbosity( bool newvalue ) { verbosity = newvalue; }
 	void setPaging( bool newvalue ) { paging = newvalue; }
+	void setShowNum( bool newvalue ) { showNumbers = newvalue; }
 	void setSortPrefs(std::string newPrefs);
 	
 	friend class GoalComparator;// to avoid 3 function calls for every iteration of the comparator

@@ -93,8 +93,10 @@ int MainMenu::showGoals(int firstRecord) {
 	std::cout<<"GOALS:";
 	std::cout<<std::setfill(' ')<<std::setw(73)<<"["+UserOptions::getInstance().getSortPrefs()+"]"<<'\n';
 	std::cout<<std::setfill('=')<<std::setw(80)<<"\n";
+	if (UserOptions::getInstance().getShowNum())
+		std::cout<<std::setfill(' ')<<std::setw(5)<<"# ";
 	std::cout<<std::setfill(' ')<<std::setw(40)<<"Name";
-	std::cout<<std::setw(12)<<"Priority"<<std::setw(12)<<"%Completed"<< std::setw(12)<<" Unit Cost\n";
+	std::cout<<std::setw(9)<<"Priority"<<std::setw(12)<<"%Completed"<< std::setw(12)<<" Unit Cost\n";
 	std::cout<<std::setfill('-')<<std::setw(80)<<"\n"<<std::setfill(' ');
 
 	int res=StateMachine::getGC().printAll(std::cout,firstRecord,
@@ -173,7 +175,8 @@ void ConfigMenu::display() {
 		}
 	}
 	std::cout<<"Configuration: b(ack), p(aging ->"<<(UserOptions::getInstance().getPaging()?"off":"on");
-	std::cout<<"), v(erbose ->"<<(UserOptions::getInstance().getVerbosity()?"off":"on")<<"), h(elp) :";
+	std::cout<<"), v(erbose ->"<<(UserOptions::getInstance().getVerbosity()?"off":"on")<<"), ";
+	std::cout<<" n(umbers) ->"<<(UserOptions::getInstance().getShowNum()?"off":"on")<<") h(elp) :";
 }	
 
 //Displays option status when user toggles some option
@@ -183,10 +186,13 @@ void ConfigMenu::displayOption( int optionID ) {
 			std::cout<<"Verbosity is now "<<(UserOptions::getInstance().getVerbosity()?"on":"off")<<"\n\n";break;
 		case CONFIG_PAGING:	
 			std::cout<<"Paging is now "<<(UserOptions::getInstance().getPaging()?"on":"off")<<"\n\n";break;
+		case CONFIG_NUMBERS:	
+			std::cout<<"Record Numbering is now "<<(UserOptions::getInstance().getShowNum()?"on":"off")<<"\n\n";break;
 		case CONFIG_HELP:	
 			std::cout<<"Help:\n"
 "Verbosity switches wordiness in the menu prompt, when off just lists available characters\n"
 "Paging switches taking into acount the terminal size and splitting Goals list into pages\n"
+"Record Numbering displays a relative record ID in the current list to facilitate editing\n"
 "Back saves changes and returns to Main menu\n\n";break;
 		default: break;
 	}
@@ -211,6 +217,7 @@ void ConfigMenu::input() {
 	toggled[CONFIG_BACK]	= status['b'-'a'];
 	toggled[CONFIG_VERBOSE] = status['v'-'a'];
 	toggled[CONFIG_PAGING]	= status['p'-'a'];
+	toggled[CONFIG_NUMBERS] = status['n'-'a'];
 	toggled[CONFIG_HELP]	= status['h'-'a'];
 }
 
@@ -221,6 +228,9 @@ void ConfigMenu::act() {
 	}
        	if ( toggled[CONFIG_PAGING]  ) {
 		UserOptions::getInstance().setPaging( !UserOptions::getInstance().getPaging() );
+	}
+       	if ( toggled[CONFIG_NUMBERS]  ) {
+		UserOptions::getInstance().setShowNum( !UserOptions::getInstance().getShowNum() );
 	}
 	if ( toggled[CONFIG_BACK]) {
 		display();// user may have also toggled some other option, show feedback

@@ -2,5 +2,6 @@
 <options>
 	<verbosity>false</verbosity>
 	<paging>true</paging>
+	<numbers>true</numbers>
 	<sort>uacd</sort>
 </options>

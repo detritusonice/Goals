@@ -45,7 +45,7 @@ TEST(goal,create) {
 // test if printing works as planned. Output to an ostringstream and compare 
 TEST(goal,print) {
 	Goal goal{"Sample goal",100,50,0.01};
-	std::string str("                             Sample goal         100          50       0.01\n");
+	std::string str("                             Sample goal      100          50       0.01\n");
 	std::ostringstream out;
 	goal.print(out);
 	ASSERT_EQ(str, out.str()); //compare expected to the ostrstreams string
@@ -88,7 +88,7 @@ TEST( GoalContainer, readGoal ) {
 	Goal goal=gc.readGoal(parser,label);//should fill in the fields
 	std::ostringstream out;
 	goal.print(out);//dump to string
-	std::string str("                             Sample goal         100          50       0.01\n");
+	std::string str("                             Sample goal      100          50       0.01\n");
 	ASSERT_EQ(out.str(),str);
 }
 //test trying to read from a nonexistent or unreadable file
@@ -105,9 +105,9 @@ TEST( GoalContainer, openfile ) {
 	ASSERT_EQ(gc.size(),3); // also testing for rejetion of duplicate goals included in input file
 	std::ostringstream out;	// create a stringstream to hold the pring output
 	gc.printAll(out);	// invoke printall to dump output to the stream
-	ASSERT_EQ(out.str(),"                             Sample goal         100          50       0.01\n"
-			"                        Create Goals app         100          10       0.1\n"
-			"                  Pass All tests at 100%         100         100       0.01\n"	);
+	ASSERT_EQ(out.str(),"                             Sample goal      100          50       0.01\n"
+			"                        Create Goals app      100          10       0.1\n"
+			"                  Pass All tests at 100%      100         100       0.01\n"	);
 }
 
 // test acceptance of sort strings, valid or not
@@ -324,6 +324,7 @@ TEST( UserOptions, saveLoadOptions ) {
 
 	UserOptions::getInstance().setVerbosity(false);
 	UserOptions::getInstance().setPaging(true);
+	UserOptions::getInstance().setShowNum(true);
 	UserOptions::getInstance().setSortPrefs("uacd");
 	ASSERT_EQ( UserOptions::getInstance().getSortingVer(),ver+2);// following explicit call
 
@@ -332,8 +333,14 @@ TEST( UserOptions, saveLoadOptions ) {
 	UserOptions::getInstance().loadFile("sampleoptions.xml");
 	ASSERT_EQ( UserOptions::getInstance().getVerbosity(),false);
 	ASSERT_EQ( UserOptions::getInstance().getPaging(),true);
+	ASSERT_EQ( UserOptions::getInstance().getShowNum(),true);
 	ASSERT_EQ( UserOptions::getInstance().getSortPrefs(),"uacd");
 	ASSERT_EQ( UserOptions::getInstance().getSortingVer(),ver+3); // one more indirect setSortPrefs
+
+
+	UserOptions::getInstance().setPaging(false);
+	UserOptions::getInstance().setShowNum(false);
+	UserOptions::getInstance().setSortPrefs(""); // reset static Options to default (side-effect)
 }
 
 int main(int argc, char **argv) {
