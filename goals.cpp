@@ -168,6 +168,26 @@ void GoalContainer::sortGoals() {
 	refreshSort=false;
 }
 
+// confirm id in current displayed set.
+bool GoalContainer::checkRecordID( int recordID ) {
+	return (recordID>=0 && recordID<sorted.size());
+}
+
+// remove from active goal record set.
+bool GoalContainer::deleteRecord( int recordID ) {
+	int globalID=sorted[recordID]; 		// get the absolute record ID
+	try {
+	active.erase(globalID);			//remove from active records
+	} catch ( std::exception e) {
+		std::cerr<<"error while deleting goal:"<<e.what()<<'\n';
+		return false;
+	}
+	//searchRes.erase(globalID);		// remove from search results
+	sorted.erase(sorted.begin()+recordID);// removing the record will not necessitate a new sorting
+						// dependend records should be reloaded, but is wasteful.
+	modifiedGoals=true;			//changes made, should ask about saving on exit 
+	return true;
+}
 // comparator objects function operator, to be called recursively from std::sort and work based on depth and 
 // comparison preferences string in GoalContainer
 // Note: using a static to mark recursive use of the sorting string

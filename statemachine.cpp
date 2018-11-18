@@ -77,12 +77,12 @@ void MainMenu::display() {
 		refresh=false;
 	}
 	if ( UserOptions::getInstance().getVerbosity() ) {
-		std::cout<<"Select action: e(xit), o(ptions), r(efresh), s(ort)";
+		std::cout<<"e(xit), o(ptions), r(efresh), s(ort), d(elete)";
 		if (nextToShow>0)
 			std::cout<<",n(ext)";
 	}
 	else {
-		std::cout<<"e,q,o,r,s";
+		std::cout<<"e,q,o,r,s,d";
 		if (nextToShow>0)
 			std::cout<<",n";
 	}
@@ -90,6 +90,7 @@ void MainMenu::display() {
 }
 
 int MainMenu::showGoals(int firstRecord) {
+	prevShown = firstRecord;
 	std::cout<<"GOALS:";
 	std::cout<<std::setfill(' ')<<std::setw(73)<<"["+UserOptions::getInstance().getSortPrefs()+"]"<<'\n';
 	std::cout<<std::setfill('=')<<std::setw(80)<<"\n";
@@ -122,8 +123,16 @@ void MainMenu::act() {
 
 		case 'o': StateMachine::setNextStateID(STATE_OPTIONSMENU);break;
 		case 's': StateMachine::setNextStateID(STATE_SORTMENU);break;
-		case 't': StateMachine::setNextStateID(STATE_EXIT);break;
-		case 'x': throw(std::runtime_error{"YOU TERMINATED ME!!!"});break;
+		case 'd': if ( !UserOptions::getInstance().getShowNum()) {
+				  UserOptions::getInstance().setShowNum(true);// user needs to choose
+				  showGoals(prevShown); // show numbers for the last displayed screen 
+				  UserOptions::getInstance().setShowNum(false);// reset option
+				  StateMachine::setNextStateID(STATE_DELETE);
+			  }
+			  break;
+
+
+
 		default: break;
 	}
 	c=char{0};
@@ -165,15 +174,18 @@ void SortMenu::act() {
 }
 
 //--------------------------------------------------------------------------------
-// Displays configuration menu and user feedback upon option toggling.
-// Side-effect: resets toggled status to false, to prepare for next user choice
-void OptionsMenu::display() {
+void OptionsMenu::showFeedback() {
 	for (int i=0;i<NUM_OPTIONS;i++) {
 		if (toggled[i]) {
 			displayOption(i);
 			toggled[i]=false;
 		}
 	}
+}
+// Displays configuration menu and user feedback upon option toggling.
+// Side-effect: resets toggled status to false, to prepare for next user choice
+void OptionsMenu::display() {
+	showFeedback();
 	std::cout<<"Options: b(ack), p(aging ->"<<(UserOptions::getInstance().getPaging()?"off":"on");
 	std::cout<<"), v(erbose ->"<<(UserOptions::getInstance().getVerbosity()?"off":"on")<<"), ";
 	std::cout<<" n(umbers) ->"<<(UserOptions::getInstance().getShowNum()?"off":"on")<<") h(elp) :";
@@ -233,10 +245,57 @@ void OptionsMenu::act() {
 		UserOptions::getInstance().setShowNum( !UserOptions::getInstance().getShowNum() );
 	}
 	if ( toggled[OPTION_BACK]) {
-		display();// user may have also toggled some other option, show feedback
+		showFeedback();// user may have also toggled some other option, show feedback
 		StateMachine::setNextStateID(STATE_MAINMENU);
 	}
 }
+//--------------------------------------------------------------------------------
+// display choices for the deletion of a record. prompt and verification info
+void DeleteState::display() {
+	if ( recordID == -1 ) 
+		std::cout<<" Record number to delete:";
+	else {
+		std::cout<<" You chose to delete:\n";
+		StateMachine::getGC().printRecord( std::cout,recordID );
+		std::cout<<" are you sure(y/n)?";
+	}
+}
+//--------------------------------------------------------------------------------
+// two rounds of input. first the record id in the current set of displayed records
+// then the verification of deleting the goal record
+void DeleteState::input() {
+	if (recordID>=0) {
+		char c;
+		std::cin>>c;
+		c=tolower(c);
+		if (c=='y')
+			commit=true;
+		else std::cout<<" aborting...\n";
+		done=true;
+	}
+	else {
+		std::cin>>recordID;
+		recordID--;// user chooses 1-based
+		if ( !StateMachine::getGC().checkRecordID(recordID)) {
+			std::cout<<"No such record number in current set\n";
+			recordID=-1;
+			done=true; // entering a wrong number
+		}
+	}
+}
+//--------------------------------------------------------------------------------
+// calling upon GoalContainer to remove record id fromt the active records set
+// when the user has entered a valid id and verified the removal. Exits on error.
+void DeleteState::act() {
+	if (recordID>=0 && commit ) {
+		std::cout<<" Deleting ..";
+		if (StateMachine::getGC().deleteRecord(recordID))
+			std::cout<<"done.";
+		std::cout<<'\n';
+	}
+	if (done) StateMachine::setNextStateID(STATE_MAINMENU);
+}
+	
 //--------------------------------------------------------------------------------
 // set the machine to the new state, pushing previous in the stack
 // this is called periodically by the run()'s loop
@@ -256,6 +315,8 @@ void StateMachine::setState( STATE newStateID ) {
 		case STATE_MAINMENU: newstate= new MainMenu{};break;
 		case STATE_SORTMENU: newstate= new SortMenu{UserOptions::getInstance().getSortPrefs()};break;
 		case STATE_OPTIONSMENU: newstate= new OptionsMenu{};break;
+		case STATE_DELETE: newstate= new DeleteState{};break;
+				   
 		default:break;
 	}
 	if (newstate!=nullptr) {
