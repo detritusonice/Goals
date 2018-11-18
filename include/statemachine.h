@@ -36,6 +36,7 @@ enum STATE {
 	STATE_MAINMENU,
 	STATE_SORTMENU,
 	STATE_OPTIONSMENU,
+	STATE_DELETE,
 	STATE_INVALID
 };
 
@@ -78,8 +79,9 @@ class MainMenu : public State {
 	bool refresh;
 	int nextToShow;
 	int showGoals(int firstRecord=0);
+	int prevShown; //the first record of the previous screen. used to re-show numbers of records
  public:
-	MainMenu():State{STATE_MAINMENU},changed{false},c{0},refresh{true},nextToShow{0} {}
+	MainMenu():State{STATE_MAINMENU},changed{false},c{0},refresh{true},nextToShow{0},prevShown{0} {}
 	void display();
 	void input();
 	void act();
@@ -117,8 +119,21 @@ class OptionsMenu : public State {
 	void input();
 	void act();
 	void displayOption( int optionID );
+	void showFeedback();
 };
 	
+//=============================================================================
+
+class DeleteState: public State {
+	int recordID;
+	bool commit;
+	bool done;
+ public:
+	DeleteState():State{STATE_DELETE},recordID{-1},commit{false},done{false} {}
+	void display();
+	void input();
+	void act();
+};
 //=============================================================================
 
 class StateMachine {

@@ -84,6 +84,7 @@ class GoalContainer {
  public:
 	GoalContainer():modifiedGoals{false},sortver{-1},refreshSort{true} {}
 
+	void printRecord( std::ostream &strm, int id ) { v[sorted[id]].print(strm);}
 	int printAll( std::ostream &strm,int first=0,int maxToPrint=1000) const;
 
 	size_t size() { return v.size(); }
@@ -94,6 +95,9 @@ class GoalContainer {
 	bool saveFile();
 	Goal readGoal(XMLParser &p, std::string &label);
 	void writeGoal( XMLWriter& writer, const Goal& goal); 
+
+	bool checkRecordID( int recordID );// confirm id in current displayed set.
+	bool deleteRecord( int recordID ); // remove from active goal record set.
 
 	void sortGoals();
 	friend class GoalComparator;
