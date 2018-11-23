@@ -27,19 +27,16 @@
 #include "statemachine.h"
 #include <unistd.h> // for STDOUT_FILENO
 
-STATE StateMachine::stateID=STATE_EXIT;
-struct winsize StateMachine::ws;
-GoalContainer StateMachine::gc;
 
 void ExitMenu::display() { 
-	if (StateMachine::getGC().isModified())
+	if (StateMachine::getInstance().getGC().isModified())
 		std::cout<<"\nsave changes (yes/no):";
 	else
 		std::cout<<"No changes made to the goal records.\n";
 }
 
 void ExitMenu::input() { 
-	if (!StateMachine::getGC().isModified())	// no changes to the goal data
+	if (!StateMachine::getInstance().getGC().isModified())	// no changes to the goal data
 		return;
 	char c;
 	std::cin>>c;		// Using cin for brevity instead of std::cin.get()
@@ -54,10 +51,10 @@ void ExitMenu::input() {
 }
 
 void ExitMenu::act() {
-	if (StateMachine::getGC().isModified()) {
+	if (StateMachine::getInstance().getGC().isModified()) {
 		if (saveChanges) {
 			std::cout<<"Saving changes...";
-			StateMachine::getGC().saveFile();
+			StateMachine::getInstance().getGC().saveFile();
 			std::cout<<"done.\n";
 		}
 		else {
@@ -66,7 +63,7 @@ void ExitMenu::act() {
 	}
 	std::cout<<"Goodbye.\n";
 
-	StateMachine::setNextStateID(STATE_EXIT);// signals machine to return.
+	StateMachine::getInstance().setNextStateID(STATE_EXIT);// signals machine to return.
 }
 
 
@@ -100,8 +97,8 @@ int MainMenu::showGoals(int firstRecord) {
 	std::cout<<std::setw(9)<<"Priority"<<std::setw(12)<<"%Completed"<< std::setw(12)<<" Unit Cost\n";
 	std::cout<<std::setfill('-')<<std::setw(80)<<"\n"<<std::setfill(' ');
 
-	int res=StateMachine::getGC().printAll(std::cout,firstRecord,
-			( UserOptions::getInstance().getPaging()? std::max(1,StateMachine::termHeight()-7): 1<<30) );
+	int res=StateMachine::getInstance().getGC().printAll(std::cout,firstRecord,
+			( UserOptions::getInstance().getPaging()? std::max(1,StateMachine::getInstance().termHeight()-7): 1<<30) );
 	if (res==0) 
 		std::cout<<std::setfill('=')<<std::setw(80)<<"\n";
 	return res;// return next goal record to be shown
@@ -116,18 +113,18 @@ void MainMenu::input() {
 void MainMenu::act() { 
 	switch(c) {
 		case 'q':
-		case 'e': StateMachine::setNextStateID(STATE_EXITMENU);break;
+		case 'e': StateMachine::getInstance().setNextStateID(STATE_EXITMENU);break;
 
 		case 'n': if (nextToShow>0) 	//this refreshes only if more records exist
 		case 'r': refresh=true;break;
 
-		case 'o': StateMachine::setNextStateID(STATE_OPTIONSMENU);break;
-		case 's': StateMachine::setNextStateID(STATE_SORTMENU);break;
+		case 'o': StateMachine::getInstance().setNextStateID(STATE_OPTIONSMENU);break;
+		case 's': StateMachine::getInstance().setNextStateID(STATE_SORTMENU);break;
 		case 'd': if ( !UserOptions::getInstance().getShowNum()) {
 				  UserOptions::getInstance().setShowNum(true);// user needs to choose
 				  showGoals(prevShown); // show numbers for the last displayed screen 
 				  UserOptions::getInstance().setShowNum(false);// reset option
-				  StateMachine::setNextStateID(STATE_DELETE);
+				  StateMachine::getInstance().setNextStateID(STATE_DELETE);
 			  }
 			  break;
 
@@ -170,7 +167,7 @@ void SortMenu::act() {
 	if (changed)
 		UserOptions::getInstance().setSortPrefs(sortString);
 	if (done)
-		StateMachine::setNextStateID(STATE_MAINMENU);
+		StateMachine::getInstance().setNextStateID(STATE_MAINMENU);
 }
 
 //--------------------------------------------------------------------------------
@@ -246,7 +243,7 @@ void OptionsMenu::act() {
 	}
 	if ( toggled[OPTION_BACK]) {
 		showFeedback();// user may have also toggled some other option, show feedback
-		StateMachine::setNextStateID(STATE_MAINMENU);
+		StateMachine::getInstance().setNextStateID(STATE_MAINMENU);
 	}
 }
 //--------------------------------------------------------------------------------
@@ -256,7 +253,7 @@ void DeleteState::display() {
 		std::cout<<" Record number to delete:";
 	else {
 		std::cout<<" You chose to delete:\n";
-		StateMachine::getGC().printRecord( std::cout,recordID );
+		StateMachine::getInstance().getGC().printRecord( std::cout,recordID );
 		std::cout<<" are you sure(y/n)?";
 	}
 }
@@ -276,7 +273,7 @@ void DeleteState::input() {
 	else {
 		std::cin>>recordID;
 		recordID--;// user chooses 1-based
-		if ( !StateMachine::getGC().checkRecordID(recordID)) {
+		if ( !StateMachine::getInstance().getGC().checkRecordID(recordID)) {
 			std::cout<<"No such record number in current set\n";
 			recordID=-1;
 			done=true; // entering a wrong number
@@ -289,11 +286,11 @@ void DeleteState::input() {
 void DeleteState::act() {
 	if (recordID>=0 && commit ) {
 		std::cout<<" Deleting ..";
-		if (StateMachine::getGC().deleteRecord(recordID))
+		if (StateMachine::getInstance().getGC().deleteRecord(recordID))
 			std::cout<<"done.";
 		std::cout<<'\n';
 	}
-	if (done) StateMachine::setNextStateID(STATE_MAINMENU);
+	if (done) StateMachine::getInstance().setNextStateID(STATE_MAINMENU);
 }
 	
 //--------------------------------------------------------------------------------
@@ -326,7 +323,8 @@ void StateMachine::setState( STATE newStateID ) {
 	}
 	else stateID=state->getStateID(); // cancel state change
 }	
-	
+//-----------------------------------------------------------------------------
+
 // set machine to the previous state
 void StateMachine::popState() {
 	delete state;
@@ -373,4 +371,23 @@ int StateMachine::run() {
 	}
 	UserOptions::getInstance().writeFile();
 	return 0;
+}
+
+// clears up existing states, releasing memory
+void StateMachine::wipeStates() {
+	if (state!=nullptr)
+		delete state;
+	while (!sv.empty()) {
+		auto p=sv.back();
+		sv.pop_back();
+		delete p;
+	}
+}
+
+//since StateMachine is singleton, tests will need to start from scratch.
+void StateMachine::reset() {
+	wipeStates();
+
+	state=new ExitMenu{} ; 		// to be pushed in sv by setState 
+	setState(STATE_MAINMENU);	// enter the main menu
 }

@@ -26,13 +26,10 @@
 #include "goals.h"
 #include "statemachine.h"
 
-
-GoalContainer gc;// to ease access from all states, defined here to enable testing
-
 int main( int argc, char** argv) {
 	try{
-		StateMachine stm;
-		return stm.run();
+		int res= StateMachine::getInstance().run();
+		return res;
 	}catch( std::exception &e) {
 		std::cerr<<"Exception caught:"<<e.what()<<"\n";
 	}

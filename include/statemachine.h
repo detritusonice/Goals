@@ -54,6 +54,7 @@ public:
 	virtual void act() {}
 	virtual void onPopped() {};
 	STATE getStateID() {return stateID;}
+
 #ifdef TESTING_ACTIVE
 	friend class StateTester;
 #endif //TESTING_ACTIVE
@@ -134,47 +135,51 @@ class DeleteState: public State {
 	void input();
 	void act();
 };
-//=============================================================================
 
+//=============================================================================
+// singleton implementation of the state machine. other option was expose all to states
+// and pass a pointer.
 class StateMachine {
 	bool changed;				// changes made to preferences
 	std::vector<State*> sv; 		// acts as a state stack
 	State* state; 				// the current state the machine is in
-	static STATE stateID;
-	static struct winsize ws;		// containing Linux console dimensions
-	static GoalContainer gc;
+	STATE stateID;
+	struct winsize ws;		// containing Linux console dimensions
+	GoalContainer gc;
 
 	void setState( STATE newStateID ); 	//push current state, activate new state
 	void popState(); 			// return to previous state
-	void queryConsoleDimensions();
+	
+	void reset();				// achieve proper state and sv initialization
+        void wipeStates();			// release all memory used by existing states	
 
- public:
+	void queryConsoleDimensions();		// get Terminal dimensions from system
 		// default state is stack with an ExitMenu and MainMenu as current 
 		
-	StateMachine():changed{false},state{ nullptr }{
-		state=new ExitMenu{} ; 		// to be pushed by setState 
-		setState(STATE_MAINMENU);	// enter the main menu
+	// singleton. private construction
+	StateMachine():changed{false},state{ nullptr },stateID{STATE_EXIT}{
+		reset();
 	}
-
+ public:
 	~StateMachine() {
-		if (state!=nullptr) 
-			delete state;
-		while (!(sv.empty())) {
-			auto p=sv.back();
-			sv.pop_back();
-			delete p; 
-			}
-		}
+		wipeStates();
+	}
+	static StateMachine& getInstance() {
+		static StateMachine theMachine;
+		return theMachine;
+	}
+	
 	// flags the next state for the machine to transit to		
-	static void setNextStateID( STATE newID ) { stateID=newID; }
-	static int termWidth() { return ws.ws_col; }
-	static int termHeight() { return ws.ws_row; }
+	void setNextStateID( STATE newID ) { stateID=newID; }
+	int termWidth() { return ws.ws_col; }
+	int termHeight() { return ws.ws_row; }
 
-	static GoalContainer& getGC() {return gc;}
+	GoalContainer& getGC() {return gc;}
+
+	int queryPrevStateID() { return (!sv.empty()?sv.back()->getStateID():STATE_EXIT);}
 	
 	int run(); // main loop.
 
-	friend class State; // in doubt: who should own a goal container? how is access to it given?
 #ifdef TESTING_ACTIVE	
 	friend class StateMachineTester;
 #endif //TESTING ACTIVE

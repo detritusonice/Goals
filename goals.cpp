@@ -26,8 +26,6 @@
 #include <algorithm>
 #include "goals.h"
 
-int UserOptions::sortingver=0;//static, sorting string version during this run
-
 std::ostream& operator <<( std::ostream& out, const Goal &goal) {
 	return goal.print(out);
 }
@@ -53,7 +51,7 @@ int GoalContainer::loadFile( const std::string &name) {
 	v.clear();
 	active.clear();
 	filename= name;//store the filename of the container's records for saving
-	std::set<Goal> gs;
+	std::set<std::string> gs;
 	int id=0;
 	try {
 
@@ -66,10 +64,11 @@ int GoalContainer::loadFile( const std::string &name) {
 			if (label=="goal") {
 				Goal goal= readGoal(parser,label);//given the label, load the struct
 				
-				auto res=gs.insert(goal);
+				auto res=gs.insert(goal.name);
 				if ( res.first!=gs.end() && res.second ) { // succeeded, not a duplicate
 					v.push_back(goal);	//unique records, keep initial order
 					active.insert( active.end(),id++); //hint insert at the end
+					names.insert(goal.name);
 				}
 				label = parser.getLabel();//read the next label
 			}
@@ -182,6 +181,7 @@ bool GoalContainer::deleteRecord( int recordID ) {
 		std::cerr<<"error while deleting goal:"<<e.what()<<'\n';
 		return false;
 	}
+	names.erase(v[globalID].name);		// remove goal name from used name set
 	//searchRes.erase(globalID);		// remove from search results
 	sorted.erase(sorted.begin()+recordID);// removing the record will not necessitate a new sorting
 						// dependend records should be reloaded, but is wasteful.

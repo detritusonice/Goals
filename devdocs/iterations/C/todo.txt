@@ -4,14 +4,20 @@ IT MainMenu:
 	Show record number before goal record.
 	ConfigOptions: Option to show record numbers in main menu.
 
-IT Delete option
-	Delete record by record ID.
+IT Delete option			DONE
+	Delete record by record ID.	DONE
 
 IT Insert option
 	IT user inserts the fields, reviews and accepts, rejects, 
 		or selects field for modification, until acceptance or rejection.
+	uses Editor state
+
 IT Modify option
 	Modify record by record ID. show options for editing fields like insert modify.
+
+IT Editor state
+	handles editing of new or existing records. 
+
 
 IT Search option
 	by field, one at a time as search criterion, by entering a substring of name, of
@@ -23,3 +29,5 @@ IT GoalContainer:
 	Sort should have effect on the displayed records, either full file list
 		or search results.
 	Option in main menu to abandon search results and reset display
+
+IT Statemachine should be a singleton with a reset() option.	DONE

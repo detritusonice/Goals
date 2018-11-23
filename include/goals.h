@@ -38,8 +38,7 @@ class UserOptions;
 
 //==========Goal============================================
 
-class Goal {
-public://just temporary, until gettors and settors are in place
+struct Goal {
 	std::string name;
 	int priority;
 	int completion;
@@ -75,6 +74,7 @@ class GoalContainer {
 				// additions and modifications are stored in this vector
 
 	std::set<int> active;	// contains indices of v which are not deleted. Used as base for search
+	std::set<std::string> names; // goal labels must be unique, facilitating enforcement
 //	std::set<int> searchRes; // active indices of v which are included in search results. Used as
 				 // base for 'sorted' initialisation. 
 
@@ -167,15 +167,16 @@ class UserOptions {
 	bool showNumbers;
 	std::string sortPrefs;  // field-order pairs, in lowercase. used by comparator object
 	std::string filename;
-	static int sortingver;// will increase to indicate a new sorting string set.
-
-	UserOptions():verbosity{true},paging{false},showNumbers{false},sortPrefs{""} {} //private constructor, singleton
+	int sortingver;// will increase to indicate a new sorting string set.
+	
+	//private constructor, singleton
+	UserOptions():verbosity{true},paging{false},showNumbers{false},sortPrefs{""},sortingver{0} {} 
 public:
 	static UserOptions& getInstance() { 
 		static UserOptions userOptions; // the first and only instance created.
 		return userOptions;
 	}
-	static int getSortingVer() { return sortingver;} // enabling goalcontainers to update sorting order 
+	int getSortingVer() { return sortingver;} // enabling goalcontainers to update sorting order 
 
 	UserOptions( UserOptions &a) 	= delete;// copy constructor
 	UserOptions( UserOptions &&a) 	= delete;// move constructor

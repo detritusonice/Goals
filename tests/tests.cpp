@@ -276,25 +276,29 @@ public:
 	void popState() { 
 		theMachine->popState();
 	}
+
+	void reset() {
+		theMachine->reset();
+	}
 };
 
 TEST( StateMachine, StateMachineTester ) {
-	StateMachine machine;
-	StateMachineTester tester{&machine};
+	StateMachineTester tester{&StateMachine::getInstance()};
+	tester.reset();
 	ASSERT_EQ(tester.getStateVector()->size(),1);//should provide access to private members
 }
 
 TEST( StateMachine, create ) {
-	StateMachine machine;
-	StateMachineTester tester{&machine};
-	
+	StateMachineTester tester{&StateMachine::getInstance()};
+	tester.reset();
 	ASSERT_EQ(tester.getStateVector()->size(),1);
 	ASSERT_EQ(tester.getCurrentStateID(),STATE_MAINMENU);
 }
 
 TEST( StateMachine, pop) {
-	StateMachine machine;
-	StateMachineTester tester{&machine};
+	
+	StateMachineTester tester{&StateMachine::getInstance()};
+	tester.reset();
 	// already tested initial conditions
 	tester.popState();
 	ASSERT_EQ(tester.getStateVector()->size(),0);
@@ -309,8 +313,8 @@ TEST( StateMachine, pop) {
 }
 
 TEST( StateMachine, autoPop ) {
-	StateMachine machine;
-	StateMachineTester tester{&machine};
+	StateMachineTester tester{&StateMachine::getInstance()};
+	tester.reset();
 	
 	tester.setState( STATE_EXITMENU );// this is the previous in the stack. should pop
 	ASSERT_EQ( tester.getStateVector()->size(), 0);// popped
