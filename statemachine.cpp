@@ -74,12 +74,12 @@ void MainMenu::display() {
 		refresh=false;
 	}
 	if ( UserOptions::getInstance().getVerbosity() ) {
-		std::cout<<"e(xit), o(ptions), r(efresh), s(ort), d(elete), i(nsert)";
+		std::cout<<"e(xit), o(ptions), r(efresh), s(ort), d(elete), i(nsert), m(odify)";
 		if (nextToShow>0)
 			std::cout<<",n(ext)";
 	}
 	else {
-		std::cout<<"e,q,o,r,s,d,i";
+		std::cout<<"e,q,o,r,s,d,i,m";
 		if (nextToShow>0)
 			std::cout<<",n";
 	}
@@ -124,13 +124,17 @@ void MainMenu::act() {
 				  UserOptions::getInstance().setShowNum(true);// user needs to choose
 				  showGoals(prevShown); // show numbers for the last displayed screen 
 				  UserOptions::getInstance().setShowNum(false);// reset option
-				  StateMachine::getInstance().setNextStateID(STATE_DELETE);
 			  }
+			  StateMachine::getInstance().setNextStateID(STATE_DELETE);
 			  break;
 		case 'i': StateMachine::getInstance().setNextStateID(STATE_INSERT);break;
-
-
-
+		case 'm': if ( !UserOptions::getInstance().getShowNum()) {
+				  UserOptions::getInstance().setShowNum(true);// user needs to choose
+				  showGoals(prevShown); // show numbers for the last displayed screen 
+				  UserOptions::getInstance().setShowNum(false);// reset option
+			  }
+			  StateMachine::getInstance().setNextStateID(STATE_MODIFY);
+			  break; 
 		default: break;
 	}
 	c=char{0};
@@ -296,8 +300,52 @@ void DeleteState::act() {
 //-----------------------------------------------------------------------------
 
 // display insert banner
+void ModifyState::display() {
+        if (!done && recordID<0)
+                std::cout<<"Modify which record (number):";
+}
+
+void ModifyState::input() {
+	if (!done) {
+		std::cin>>recordID;
+		recordID--;// user chooses 1-based
+		if ( !StateMachine::getInstance().getGC().checkRecordID(recordID)) {
+			std::cout<<"No such record number in current set\n";
+			recordID=-1;
+			done=true; // entering a wrong number
+		}
+	}
+}
+
+// handle control of goal record editing to ModifyState, act appropriately upon return
+void ModifyState::act() {
+        if (!done) {
+			done=true;
+			if (recordID>=0) {
+				modGoal.idx=StateMachine::getInstance().getGC().getGoalByRecordID(recordID,modGoal.goal);
+                        	StateMachine::getInstance().setNextStateID(STATE_EDITOR);
+			}
+			else 
+				StateMachine::getInstance().setNextStateID(STATE_MAINMENU);
+        }
+        else {
+                if (modGoal.validated) {
+                        try {
+                                StateMachine::getInstance().getGC().modifyRecord(recordID,modGoal.goal);    
+				
+                                std::cout<<"Goal Modified.\n";
+                        } catch ( std::exception &e) {
+                                std::cerr<<"Exception caught while modifying existin goal:"<<e.what();
+                        }
+                }
+                else
+                        std::cout<<"Modification aborted.\n";
+                StateMachine::getInstance().setNextStateID( STATE_MAINMENU );
+        }
+}
+//-----------------------------------------------------------------------------
+// display insert banner
 void InsertState::display() {
-	std::cout<<"insert\n";
         if (!done)
                 std::cout<<"Insert New Goal:\n";
 }
@@ -356,6 +404,7 @@ void EditorState::display() {
 			tmpModGoal.goal.print(std::cout);
 			std::cout<<"\n COMMIT CHANGES(y,n)?";	
 			break;
+		default: break;
 	}
 }
 
@@ -363,8 +412,6 @@ void EditorState::input() {
 	if (!( (editState==EDITOR_VALIDATION && tmpModGoal.modified) || 
 		(!isNewRecord && editState==EDITOR_FIELDCHOICE) ) )// for other editor states input is handled internally
 		return;							    
-
-        std::cout<<"edit state input()\n";
 	char c;
 	std::cin>>c;
 	c=tolower(c);
@@ -402,14 +449,12 @@ void EditorState::act() {
 				bool ok=true;
 				if (name!=modGoalPtr->goal.name) {
 					int idx=StateMachine::getInstance().getGC().findNameIndex(name);
-					if ( idx != tmpModGoal.idx ) {
+					if ( idx != tmpModGoal.idx && idx>0) {
 						std::cout<<"A goal record with that name exists. Enter unique name.\n";
 						ok=false;
 					}
 					else 
-						tmpModGoal.modified=true; // a new record or a modified existing one.
-
-
+						tmpModGoal.modified=true; //a new record or a modified existing one
 				}
 				if (ok) {
 					tmpModGoal.goal.name=name;
@@ -441,7 +486,10 @@ void EditorState::act() {
 				editState= ( isNewRecord?EDITOR_VALIDATION:EDITOR_FIELDCHOICE ); 
 				break;
 			}
-		case EDITOR_VALIDATION: std::cerr<<"Impossible: should not have remained in this state.\n";break;
+		case EDITOR_VALIDATION: 
+			if (tmpModGoal.modified==false)
+				editState=EDITOR_DONE;
+			break;
 		case EDITOR_DONE: 
 			StateMachine::getInstance().setNextStateID( 
 					StateMachine::getInstance().getPrevStateID() 
@@ -453,6 +501,8 @@ void EditorState::act() {
 std::string EditorState::getName() {
 	std::string name;
 	while (name.empty()) {
+		if (!isNewRecord)
+			std::cout<<"Name was: "<<tmpModGoal.goal.name<<'\n';
 		std::cout<<"Name (non-empty): ";
 		std::getline(std::cin,name);
 	} 
@@ -462,6 +512,8 @@ std::string EditorState::getName() {
 int EditorState::getPriority() {
 	int priority=-1;
 	while (priority<0 || priority>100) {
+		if (!isNewRecord)
+			std::cout<<"Priority was: "<<tmpModGoal.goal.priority<<'\n';
 		std::cout<<"Priority [0-100]: ";
 		std::cin>>priority;
 	} 
@@ -471,6 +523,8 @@ int EditorState::getPriority() {
 int EditorState::getCompletion() {
 	int completion=-1;
 	while ( completion<0 || completion>100) {
+		if (!isNewRecord)
+			std::cout<<"Completion % was: "<<tmpModGoal.goal.completion<<'\n';
 		std::cout<<"% completed [0-100]: ";
 		std::cin>>completion;
 	} 
@@ -480,6 +534,8 @@ int EditorState::getCompletion() {
 double EditorState::getUnitCost() {
 	double unitcost=0.;
 	while ( unitcost<0.00001) {
+		if (!isNewRecord)
+			std::cout<<"Time cost was: "<<tmpModGoal.goal.unitcost<<'\n';
 		std::cout<<"Time cost per 1% in hours (positive float) : ";
 		std::cin>>unitcost;
 	} 
@@ -506,6 +562,7 @@ void StateMachine::setState( STATE newStateID ) {
 		case STATE_OPTIONSMENU: newstate= new OptionsMenu{};break;
 		case STATE_DELETE: newstate= new DeleteState{};break;
 		case STATE_INSERT: newstate= new InsertState{};break;
+		case STATE_MODIFY: newstate= new ModifyState{};break;
 		case STATE_EDITOR: newstate= new EditorState{};break;
 		default:break;
 	}

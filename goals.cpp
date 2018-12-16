@@ -198,7 +198,34 @@ bool GoalContainer::deleteRecord( int recordID ) {
 	return true;
 }
 
-int GoalContainer::findNameIndex( std::string& name ) {
+//modifies a goal record given its record id and new values. attentds to index and sorting updating
+bool GoalContainer::modifyRecord( int recordID, const Goal& newvals ) {
+	int globalID = sorted[recordID];
+
+	int idx=findNameIndex( newvals.name );
+	if (idx>=0 && idx != globalID ) // another goal with the same name exists
+		return false;
+	if (idx<0) // a new name
+		names.erase(v[globalID].name); // remove from the names map
+	v[globalID]=newvals;		// change the goal record
+	if (idx<0)
+		names.insert(make_pair(newvals.name,globalID)); // re-insert into names map
+	refreshSort=true; 
+	modifiedGoals=true;
+	return true;
+}
+
+//returns in copy the values of the original record, identified by record ID
+int GoalContainer::getGoalByRecordID( int recordID , Goal& copy) {
+	if (checkRecordID(recordID)) {
+		int globalID = sorted[recordID];
+		copy = v[globalID];
+		return globalID;
+	}
+	return -1;
+}
+	
+int GoalContainer::findNameIndex( const std::string& name ) const{
 	auto res=names.find(name);
 	if (res !=names.end())
 		return res->second;// the index of the goal record in V

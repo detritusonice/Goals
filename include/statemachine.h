@@ -172,7 +172,16 @@ class InsertState: public GoalEditingState {
         void act();
 };
 
-
+//============================================================================
+class ModifyState: public GoalEditingState {
+	int recordID;
+        bool done;
+ public:
+        ModifyState():GoalEditingState{STATE_MODIFY},recordID{-1},done{false}{}
+        void display();
+	void input();
+        void act();
+};
 //============================================================================
 class EditorState: public State {
         ModGoal *modGoalPtr;

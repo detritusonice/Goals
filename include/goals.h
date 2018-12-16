@@ -98,11 +98,13 @@ class GoalContainer {
 	Goal readGoal(XMLParser &p, std::string &label);
 	void writeGoal( XMLWriter& writer, const Goal& goal); 
 	void insertGoal( const Goal& newGoal);
+	bool modifyRecord( int recordID, const Goal& newvals ); 
 
+	int getGoalByRecordID(int recordID, Goal& copy); //returns index if found and stores values in copy
 	bool checkRecordID( int recordID );// confirm id in current displayed set.
 	bool deleteRecord( int recordID ); // remove from active goal record set.
 
-	int findNameIndex( std::string& name );
+	int findNameIndex( const std::string& name ) const;
 
 
 	void sortGoals();

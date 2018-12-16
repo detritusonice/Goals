@@ -13,10 +13,10 @@ IT Insert option
 	uses Editor state		DONE
 
 IT Modify option
-	Modify record by record ID. show options for editing fields like insert modify.
+	Modify record by record ID. show options for editing fields like insert modify. 	DONE
 
 IT Editor state
-	handles editing of new or existing records.	*DONE 
+	handles editing of new or existing records.	DONE 
 
 
 IT Search option
@@ -33,4 +33,4 @@ IT GoalContainer:
 IT Statemachine should be a singleton with a reset() option.	DONE
 
 IT Consider an alternative way to communicate between successive states, or at least
-	make storing the previous state less dangerous.
+	make storing the previous state less dangerous.  *DONE
