@@ -33,16 +33,31 @@ std::ostream& operator <<( std::ostream& out, const Goal &goal) {
 // dumps the goal vector's entries to a stream
 
 int GoalContainer::printAll(std::ostream& strm,int first, int maxToPrint) const {
-		if (sorted.empty()) 
-			return 0;
-		int idx;
-		for ( idx = first; idx < sorted.size() && idx < first + maxToPrint; idx++ ) {
-			if (UserOptions::getInstance().getShowNum() ) 
-				std::cout<<std::setfill(' ')<<std::setw(4)<<idx+1<<".";
-			v[sorted[idx]].print(strm);
-		}
-		return idx%sorted.size(); 
+	if (sorted.empty()) 
+		return 0;
+	int idx;
+	for ( idx = first; idx < sorted.size() && idx < first + maxToPrint; idx++ ) {
+		if (UserOptions::getInstance().getShowNum() ) 
+			std::cout<<std::setfill(' ')<<std::setw(4)<<idx+1<<".";
+		v[sorted[idx]].print(strm);
 	}
+	return idx%sorted.size(); 
+}
+
+// insert a new goal in the goal vector, also adding to helper structures
+// side effect: sets modifiedGoals and refreshSort to true
+//
+void GoalContainer::insertGoal( const Goal& goal ) {
+	if (goal.name.empty()) return;    // name is mandatory
+	auto res=names.insert(std::make_pair(goal.name,(int)v.size())); // add to names set, if not already in
+
+	if ( res.first!=names.end() && res.second ) { // succeeded, not a duplicate
+		v.push_back(goal);	//unique records, keep initial order
+		active.insert( active.end(),active.size()); //hint insert at the end
+	}
+	modifiedGoals=true;	
+	refreshSort=true; // signify re-sorting is in order
+}
 
 // loads unique named goal entries from specified file
 // side effect: vector of goals is wiped clean to contain only the new entries.
@@ -50,9 +65,8 @@ int GoalContainer::printAll(std::ostream& strm,int first, int maxToPrint) const 
 int GoalContainer::loadFile( const std::string &name) {
 	v.clear();
 	active.clear();
+	names.clear();
 	filename= name;//store the filename of the container's records for saving
-	std::set<std::string> gs;
-	int id=0;
 	try {
 
 		XMLParser parser{name};
@@ -63,13 +77,7 @@ int GoalContainer::loadFile( const std::string &name) {
 		while (label != endLabel && parser.moreToGo()) {
 			if (label=="goal") {
 				Goal goal= readGoal(parser,label);//given the label, load the struct
-				
-				auto res=gs.insert(goal.name);
-				if ( res.first!=gs.end() && res.second ) { // succeeded, not a duplicate
-					v.push_back(goal);	//unique records, keep initial order
-					active.insert( active.end(),id++); //hint insert at the end
-					names.insert(goal.name);
-				}
+				insertGoal(goal);	
 				label = parser.getLabel();//read the next label
 			}
 			else throw(std::runtime_error("Entries of a different type detected"));
@@ -78,6 +86,7 @@ int GoalContainer::loadFile( const std::string &name) {
 		std::cerr<<"exception caught: "<<e.what()<<'\n';
 	}
 	sortGoals();
+	modifiedGoals=false;
 	return v.size();
 }
 
@@ -187,6 +196,13 @@ bool GoalContainer::deleteRecord( int recordID ) {
 						// dependend records should be reloaded, but is wasteful.
 	modifiedGoals=true;			//changes made, should ask about saving on exit 
 	return true;
+}
+
+int GoalContainer::findNameIndex( std::string& name ) {
+	auto res=names.find(name);
+	if (res !=names.end())
+		return res->second;// the index of the goal record in V
+	return -1;//non-existent
 }
 // comparator objects function operator, to be called recursively from std::sort and work based on depth and 
 // comparison preferences string in GoalContainer

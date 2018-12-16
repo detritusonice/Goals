@@ -37,6 +37,9 @@ enum STATE {
 	STATE_SORTMENU,
 	STATE_OPTIONSMENU,
 	STATE_DELETE,
+	STATE_INSERT,
+	STATE_MODIFY,
+	STATE_EDITOR,
 	STATE_INVALID
 };
 
@@ -45,14 +48,16 @@ enum STATE {
 class State {
 protected:
 	STATE stateID;
-	State( STATE id ):stateID{id}{}
+	State* prevState;
+	State( STATE id ):stateID{id},prevState{nullptr}{}
 				// accessible from derived classes only
 public:
-	virtual ~State(){}
+	virtual ~State(){prevState=nullptr;}
 	virtual void display()=0;
-	virtual void input()=0;
-	virtual void act() {}
+	virtual void input(){};
+	virtual void act()=0; 
 	virtual void onPopped() {};
+	virtual void setPrevState( State *prev ) { prevState=prev;} //dangerous. will consider alternatives
 	STATE getStateID() {return stateID;}
 
 #ifdef TESTING_ACTIVE
@@ -137,6 +142,68 @@ class DeleteState: public State {
 };
 
 //=============================================================================
+//helper struct for insert and modify states to pass a new or existing Goal to
+//the editor class
+struct ModGoal {
+        Goal goal;
+        int idx;
+	bool modified;
+        bool validated;
+
+        ModGoal( const Goal& g=Goal(), int index=-1):goal{g},idx{index},
+		modified{false},validated{false} {}
+};
+
+//============================================================================
+class GoalEditingState: public State {
+protected:
+	mutable ModGoal modGoal; // to be modifiable if passed as a const pointer
+public:
+	GoalEditingState(STATE id):State{id}{}
+
+	friend class EditorState;
+};
+//============================================================================
+class InsertState: public GoalEditingState {
+        bool done;
+ public:
+        InsertState():GoalEditingState{STATE_INSERT},done{false}{}
+        void display();
+        void act();
+};
+
+
+//============================================================================
+class EditorState: public State {
+        ModGoal *modGoalPtr;
+
+	enum EDITSTATE {
+		EDITOR_INTRO,
+		EDITOR_FIELDCHOICE,
+		EDITOR_NAME,
+		EDITOR_PRIORITY,
+		EDITOR_COMPLETION,
+		EDITOR_UNITCOST,
+		EDITOR_VALIDATION,
+		EDITOR_DONE
+	} ;
+	EDITSTATE editState;
+
+	ModGoal tmpModGoal;
+	bool isNewRecord;
+	std::string getName();
+	int getPriority();
+	int getCompletion();
+	double getUnitCost();
+ public:
+        EditorState():State{STATE_EDITOR},editState{EDITOR_INTRO},isNewRecord{false}{}
+	void setPrevState( State* prev); 
+        void display();
+        void input();
+        void act();
+
+};
+//=============================================================================
 // singleton implementation of the state machine. other option was expose all to states
 // and pass a pointer.
 class StateMachine {
@@ -176,7 +243,7 @@ class StateMachine {
 
 	GoalContainer& getGC() {return gc;}
 
-	int queryPrevStateID() { return (!sv.empty()?sv.back()->getStateID():STATE_EXIT);}
+	STATE getPrevStateID() { return (!sv.empty()?sv.back()->getStateID():STATE_EXIT);}
 	
 	int run(); // main loop.
 

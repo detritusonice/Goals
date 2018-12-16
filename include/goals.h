@@ -31,6 +31,7 @@
 #include <fstream>
 #include <iomanip>
 #include <set>
+#include <map>
 
 class XMLParser;
 class XMLWriter;
@@ -74,7 +75,7 @@ class GoalContainer {
 				// additions and modifications are stored in this vector
 
 	std::set<int> active;	// contains indices of v which are not deleted. Used as base for search
-	std::set<std::string> names; // goal labels must be unique, facilitating enforcement
+	std::map<std::string,int> names; // goal labels must be unique, facilitating enforcement
 //	std::set<int> searchRes; // active indices of v which are included in search results. Used as
 				 // base for 'sorted' initialisation. 
 
@@ -93,11 +94,16 @@ class GoalContainer {
 
 	int loadFile( const std::string &name );
 	bool saveFile();
+
 	Goal readGoal(XMLParser &p, std::string &label);
 	void writeGoal( XMLWriter& writer, const Goal& goal); 
+	void insertGoal( const Goal& newGoal);
 
 	bool checkRecordID( int recordID );// confirm id in current displayed set.
 	bool deleteRecord( int recordID ); // remove from active goal record set.
+
+	int findNameIndex( std::string& name );
+
 
 	void sortGoals();
 	friend class GoalComparator;

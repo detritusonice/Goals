@@ -10,13 +10,13 @@ IT Delete option			DONE
 IT Insert option
 	IT user inserts the fields, reviews and accepts, rejects, 
 		or selects field for modification, until acceptance or rejection.
-	uses Editor state
+	uses Editor state		DONE
 
 IT Modify option
 	Modify record by record ID. show options for editing fields like insert modify.
 
 IT Editor state
-	handles editing of new or existing records. 
+	handles editing of new or existing records.	*DONE 
 
 
 IT Search option
@@ -31,3 +31,6 @@ IT GoalContainer:
 	Option in main menu to abandon search results and reset display
 
 IT Statemachine should be a singleton with a reset() option.	DONE
+
+IT Consider an alternative way to communicate between successive states, or at least
+	make storing the previous state less dangerous.

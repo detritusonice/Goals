@@ -74,12 +74,12 @@ void MainMenu::display() {
 		refresh=false;
 	}
 	if ( UserOptions::getInstance().getVerbosity() ) {
-		std::cout<<"e(xit), o(ptions), r(efresh), s(ort), d(elete)";
+		std::cout<<"e(xit), o(ptions), r(efresh), s(ort), d(elete), i(nsert)";
 		if (nextToShow>0)
 			std::cout<<",n(ext)";
 	}
 	else {
-		std::cout<<"e,q,o,r,s,d";
+		std::cout<<"e,q,o,r,s,d,i";
 		if (nextToShow>0)
 			std::cout<<",n";
 	}
@@ -127,6 +127,7 @@ void MainMenu::act() {
 				  StateMachine::getInstance().setNextStateID(STATE_DELETE);
 			  }
 			  break;
+		case 'i': StateMachine::getInstance().setNextStateID(STATE_INSERT);break;
 
 
 
@@ -292,7 +293,198 @@ void DeleteState::act() {
 	}
 	if (done) StateMachine::getInstance().setNextStateID(STATE_MAINMENU);
 }
+//-----------------------------------------------------------------------------
+
+// display insert banner
+void InsertState::display() {
+	std::cout<<"insert\n";
+        if (!done)
+                std::cout<<"Insert New Goal:\n";
+}
+
+// handle control of goal record editing to ModifyState, act appropriately upon return
+void InsertState::act() {
+        if (!done) {
+			done=true;
+                        StateMachine::getInstance().setNextStateID(STATE_EDITOR);
+        }
+        else {
+                if (modGoal.validated) {
+                        try {
+                                StateMachine::getInstance().getGC().insertGoal(modGoal.goal);    
+                                std::cout<<"Goal Inserted.\n";
+                        } catch ( std::exception &e) {
+                                std::cerr<<"Exception caught while inserting new goal:"<<e.what();
+                        }
+                }
+                else
+                        std::cout<<"Insertion aborted.\n";
+                StateMachine::getInstance().setNextStateID( STATE_MAINMENU );
+        }
+}
+//-----------------------------------------------------------------------------
+
+void EditorState::setPrevState( State* prev ) {
+	State::setPrevState(prev); //preserve base functionality
 	
+	modGoalPtr =&(dynamic_cast<GoalEditingState*>(prev)->modGoal); //either an InsertState, or a ModifyState
+	tmpModGoal=*modGoalPtr;
+	isNewRecord=(tmpModGoal.idx ==-1);
+}
+
+void EditorState::display() {
+	switch (editState) {
+		case EDITOR_INTRO:
+       			if (isNewRecord)
+			       std::cout<<"New record. Please enter field values:";
+			else {
+				std::cout<<"Editing goal record:\n";
+				modGoalPtr->goal.print(std::cout);
+			}
+			break;
+		case EDITOR_FIELDCHOICE:
+			std::cout<<"Choose field to edit [(n)ame,(p)riority,(c)ompletion,(u)nit cost] or (d)one:";
+			break;	
+		case EDITOR_VALIDATION:
+			if (!isNewRecord) {
+				//show previous values
+				std::cout<<" Before edtiting, record was:\n";
+				modGoalPtr->goal.print(std::cout);
+			}
+			//show current values and ask if user wants to commit changes	
+			std::cout<<" New record values:\n";
+			tmpModGoal.goal.print(std::cout);
+			std::cout<<"\n COMMIT CHANGES(y,n)?";	
+			break;
+	}
+}
+
+void EditorState::input() {
+	if (!( (editState==EDITOR_VALIDATION && tmpModGoal.modified) || 
+		(!isNewRecord && editState==EDITOR_FIELDCHOICE) ) )// for other editor states input is handled internally
+		return;							    
+
+        std::cout<<"edit state input()\n";
+	char c;
+	std::cin>>c;
+	c=tolower(c);
+
+	if (editState==EDITOR_VALIDATION ) {
+		if (c=='y') {
+			*modGoalPtr = tmpModGoal;
+			modGoalPtr->validated=true;
+		}
+		editState=EDITOR_DONE; //signify exit		
+	}
+	else { // will enter here only when editing an existing record and needs to choose field
+		switch(tolower(c)) {
+			case 'n':editState=EDITOR_NAME;break;
+			case 'p':editState=EDITOR_PRIORITY;break;
+			case 'c':editState=EDITOR_COMPLETION;break;
+			case 'u':editState=EDITOR_UNITCOST;break;
+			case 'd':editState=EDITOR_VALIDATION;break;
+			default: std::cout<<" invalid choice: "<<c<<"\n"; 
+		}
+	}
+}
+
+void EditorState::act() {
+	//according to the character's value call the appropriate function to edit each field
+	switch (editState) {
+		case EDITOR_INTRO: 
+			editState= ( isNewRecord?EDITOR_NAME:EDITOR_FIELDCHOICE ); 
+			break;
+		case EDITOR_FIELDCHOICE: 
+			break; // if an invalid character was entered, just loop
+		case EDITOR_NAME: 
+			{
+				std::string name=getName(); //if user enters same name as existing, nothing happens
+				bool ok=true;
+				if (name!=modGoalPtr->goal.name) {
+					int idx=StateMachine::getInstance().getGC().findNameIndex(name);
+					if ( idx != tmpModGoal.idx ) {
+						std::cout<<"A goal record with that name exists. Enter unique name.\n";
+						ok=false;
+					}
+					else 
+						tmpModGoal.modified=true; // a new record or a modified existing one.
+
+
+				}
+				if (ok) {
+					tmpModGoal.goal.name=name;
+					editState= ( isNewRecord?EDITOR_PRIORITY:EDITOR_FIELDCHOICE ); 
+				}
+				break;
+			}
+		case EDITOR_PRIORITY: 
+			{
+				tmpModGoal.goal.priority=getPriority();
+				if (tmpModGoal.goal.priority!=modGoalPtr->goal.priority)
+					tmpModGoal.modified=true;// for new records modified flag is already set by name
+				editState= ( isNewRecord?EDITOR_COMPLETION:EDITOR_FIELDCHOICE ); 
+				break;
+			}
+		case EDITOR_COMPLETION:
+			{	
+				tmpModGoal.goal.completion = getCompletion();
+				if (tmpModGoal.goal.completion!=modGoalPtr->goal.completion)
+					tmpModGoal.modified=true;
+				editState= ( isNewRecord?EDITOR_UNITCOST:EDITOR_FIELDCHOICE ); 
+				break;
+			}
+		case EDITOR_UNITCOST: 
+			{
+				tmpModGoal.goal.unitcost = getUnitCost();
+				if (tmpModGoal.goal.unitcost!=modGoalPtr->goal.unitcost)
+					tmpModGoal.modified=true;
+				editState= ( isNewRecord?EDITOR_VALIDATION:EDITOR_FIELDCHOICE ); 
+				break;
+			}
+		case EDITOR_VALIDATION: std::cerr<<"Impossible: should not have remained in this state.\n";break;
+		case EDITOR_DONE: 
+			StateMachine::getInstance().setNextStateID( 
+					StateMachine::getInstance().getPrevStateID() 
+					);
+			break;
+	} 
+} 
+
+std::string EditorState::getName() {
+	std::string name;
+	while (name.empty()) {
+		std::cout<<"Name (non-empty): ";
+		std::getline(std::cin,name);
+	} 
+	return name;
+}
+
+int EditorState::getPriority() {
+	int priority=-1;
+	while (priority<0 || priority>100) {
+		std::cout<<"Priority [0-100]: ";
+		std::cin>>priority;
+	} 
+	return priority;
+}
+
+int EditorState::getCompletion() {
+	int completion=-1;
+	while ( completion<0 || completion>100) {
+		std::cout<<"% completed [0-100]: ";
+		std::cin>>completion;
+	} 
+	return completion;
+}
+
+double EditorState::getUnitCost() {
+	double unitcost=0.;
+	while ( unitcost<0.00001) {
+		std::cout<<"Time cost per 1% in hours (positive float) : ";
+		std::cin>>unitcost;
+	} 
+	return unitcost;
+}
 //--------------------------------------------------------------------------------
 // set the machine to the new state, pushing previous in the stack
 // this is called periodically by the run()'s loop
@@ -313,10 +505,12 @@ void StateMachine::setState( STATE newStateID ) {
 		case STATE_SORTMENU: newstate= new SortMenu{UserOptions::getInstance().getSortPrefs()};break;
 		case STATE_OPTIONSMENU: newstate= new OptionsMenu{};break;
 		case STATE_DELETE: newstate= new DeleteState{};break;
-				   
+		case STATE_INSERT: newstate= new InsertState{};break;
+		case STATE_EDITOR: newstate= new EditorState{};break;
 		default:break;
 	}
 	if (newstate!=nullptr) {
+		newstate->setPrevState(state); //enabling communication between successive states
 		sv.push_back(state);// the previous state
 		state=newstate;
 		stateID=newStateID;
