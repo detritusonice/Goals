@@ -1,3 +1,11 @@
+# MAKEFILE
+# for Goals application and tests
+# created 14/Sept/2018
+# Copyright 2018 Thanasis Karpetis
+#
+# Distributed under the MIT software license, see the accompanying
+# file LICENSE or http://www.opensource.org/licenses/mit-license.php.
+
 CC=g++
 
 IDIR=include
