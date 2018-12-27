@@ -375,13 +375,12 @@ void EditorState::setPrevState( State* prev ) {
 	
 	modGoalPtr =&(dynamic_cast<GoalEditingState*>(prev)->modGoal); //either an InsertState, or a ModifyState
 	tmpModGoal=*modGoalPtr;
-	isNewRecord=(tmpModGoal.idx ==-1);
 }
 
 void EditorState::display() {
 	switch (editState) {
 		case EDITOR_INTRO:
-       			if (isNewRecord)
+       			if (tmpModGoal.mode==ModGoal::MODE_INSERT)
 			       std::cout<<"New record. Please enter field values:";
 			else {
 				std::cout<<"Editing goal record:\n";
@@ -392,9 +391,9 @@ void EditorState::display() {
 			std::cout<<"Choose field to edit [(n)ame,(p)riority,(c)ompletion,(u)nit cost] or (d)one:";
 			break;	
 		case EDITOR_VALIDATION:
-			if (!isNewRecord) {
+			if (tmpModGoal.mode!=ModGoal::MODE_INSERT) {
 				//show previous values
-				std::cout<<" Before edtiting, record was:\n";
+				std::cout<<"Previous value:\n";
 				modGoalPtr->goal.print(std::cout);
 			}
 			//show current values and ask if user wants to commit changes	
@@ -408,7 +407,7 @@ void EditorState::display() {
 
 void EditorState::input() {
 	if (!( (editState==EDITOR_VALIDATION && tmpModGoal.modified) || 
-		(!isNewRecord && editState==EDITOR_FIELDCHOICE) ) )// for other editor states input is handled internally
+		(tmpModGoal.mode!=ModGoal::MODE_INSERT && editState==EDITOR_FIELDCHOICE) ) )// for other editor states input is handled internally
 		return;							    
 	char c;
 	std::cin>>c;
@@ -437,7 +436,7 @@ void EditorState::act() {
 	//according to the character's value call the appropriate function to edit each field
 	switch (editState) {
 		case EDITOR_INTRO: 
-			editState= ( isNewRecord?EDITOR_NAME:EDITOR_FIELDCHOICE ); 
+			editState= ((tmpModGoal.mode==ModGoal::MODE_INSERT) ?EDITOR_NAME:EDITOR_FIELDCHOICE ); 
 			break;
 		case EDITOR_FIELDCHOICE: 
 			break; // if an invalid character was entered, just loop
@@ -456,7 +455,7 @@ void EditorState::act() {
 				}
 				if (ok) {
 					tmpModGoal.goal.name=name;
-					editState= ( isNewRecord?EDITOR_PRIORITY:EDITOR_FIELDCHOICE ); 
+					editState= ( (tmpModGoal.mode==ModGoal::MODE_INSERT)?EDITOR_PRIORITY:EDITOR_FIELDCHOICE ); 
 				}
 				break;
 			}
@@ -465,7 +464,7 @@ void EditorState::act() {
 				tmpModGoal.goal.priority=getPriority();
 				if (tmpModGoal.goal.priority!=modGoalPtr->goal.priority)
 					tmpModGoal.modified=true;// for new records modified flag is already set by name
-				editState= ( isNewRecord?EDITOR_COMPLETION:EDITOR_FIELDCHOICE ); 
+				editState= ( (tmpModGoal.mode==ModGoal::MODE_INSERT)?EDITOR_COMPLETION:EDITOR_FIELDCHOICE ); 
 				break;
 			}
 		case EDITOR_COMPLETION:
@@ -473,7 +472,7 @@ void EditorState::act() {
 				tmpModGoal.goal.completion = getCompletion();
 				if (tmpModGoal.goal.completion!=modGoalPtr->goal.completion)
 					tmpModGoal.modified=true;
-				editState= ( isNewRecord?EDITOR_UNITCOST:EDITOR_FIELDCHOICE ); 
+				editState= ( (tmpModGoal.mode==ModGoal::MODE_INSERT)?EDITOR_UNITCOST:EDITOR_FIELDCHOICE ); 
 				break;
 			}
 		case EDITOR_UNITCOST: 
@@ -481,7 +480,7 @@ void EditorState::act() {
 				tmpModGoal.goal.unitcost = getUnitCost();
 				if (tmpModGoal.goal.unitcost!=modGoalPtr->goal.unitcost)
 					tmpModGoal.modified=true;
-				editState= ( isNewRecord?EDITOR_VALIDATION:EDITOR_FIELDCHOICE ); 
+				editState= ( (tmpModGoal.mode==ModGoal::MODE_INSERT)?EDITOR_VALIDATION:EDITOR_FIELDCHOICE ); 
 				break;
 			}
 		case EDITOR_VALIDATION: 
@@ -499,7 +498,7 @@ void EditorState::act() {
 std::string EditorState::getName() {
 	std::string name;
 	while (name.empty()) {
-		if (!isNewRecord)
+		if (tmpModGoal.mode!=ModGoal::MODE_INSERT)
 			std::cout<<"Name was: "<<tmpModGoal.goal.name<<'\n';
 		std::cout<<"Name (non-empty): ";
 		std::getline(std::cin,name);
@@ -510,7 +509,7 @@ std::string EditorState::getName() {
 int EditorState::getPriority() {
 	int priority=-1;
 	while (priority<0 || priority>100) {
-		if (!isNewRecord)
+		if (tmpModGoal.mode!=ModGoal::MODE_INSERT)
 			std::cout<<"Priority was: "<<tmpModGoal.goal.priority<<'\n';
 		std::cout<<"Priority [0-100]: ";
 		std::cin>>priority;
@@ -521,7 +520,7 @@ int EditorState::getPriority() {
 int EditorState::getCompletion() {
 	int completion=-1;
 	while ( completion<0 || completion>100) {
-		if (!isNewRecord)
+		if (tmpModGoal.mode!=ModGoal::MODE_INSERT)
 			std::cout<<"Completion % was: "<<tmpModGoal.goal.completion<<'\n';
 		std::cout<<"% completed [0-100]: ";
 		std::cin>>completion;
@@ -532,7 +531,7 @@ int EditorState::getCompletion() {
 double EditorState::getUnitCost() {
 	double unitcost=0.;
 	while ( unitcost<0.00001) {
-		if (!isNewRecord)
+		if (tmpModGoal.mode!=ModGoal::MODE_INSERT)
 			std::cout<<"Time cost was: "<<tmpModGoal.goal.unitcost<<'\n';
 		std::cout<<"Time cost per 1% in hours (positive float) : ";
 		std::cin>>unitcost;

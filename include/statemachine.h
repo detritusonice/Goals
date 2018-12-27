@@ -129,11 +129,16 @@ class DeleteState: public State {
 //the editor class
 struct ModGoal {
         Goal goal;
+	enum MODE_USE {
+		MODE_INSERT,
+		MODE_EDIT,
+		MODE_SEARCH
+	} mode;
         int idx;
 	bool modified;
         bool validated;
 
-        ModGoal( const Goal& g=Goal(), int index=-1):goal{g},idx{index},
+        ModGoal( const Goal& g=Goal(), MODE_USE md=ModGoal::MODE_INSERT, int index=-1):goal{g},mode{md},idx{index},
 		modified{false},validated{false} {}
 };
 
@@ -150,7 +155,9 @@ public:
 class InsertState: public GoalEditingState {
         bool done;
  public:
-        InsertState():GoalEditingState{STATE_INSERT},done{false}{}
+        InsertState():GoalEditingState{STATE_INSERT},done{false}{
+		modGoal.mode=ModGoal::MODE_INSERT;
+	}
         void display();
         void act();
 };
@@ -160,7 +167,9 @@ class ModifyState: public GoalEditingState {
 	int recordID;
         bool done;
  public:
-        ModifyState():GoalEditingState{STATE_MODIFY},recordID{-1},done{false}{}
+        ModifyState():GoalEditingState{STATE_MODIFY},recordID{-1},done{false}{
+		modGoal.mode=ModGoal::MODE_EDIT;
+	}
         void display();
 	void input();
         void act();
@@ -180,15 +189,13 @@ class EditorState: public State {
 		EDITOR_DONE
 	} ;
 	EDITSTATE editState;
-
 	ModGoal tmpModGoal;
-	bool isNewRecord;
 	std::string getName();
 	int getPriority();
 	int getCompletion();
 	double getUnitCost();
  public:
-        EditorState():State{STATE_EDITOR},editState{EDITOR_INTRO},isNewRecord{false}{}
+        EditorState():State{STATE_EDITOR},editState{EDITOR_INTRO}{}
 	void setPrevState( State* prev); 
         void display();
         void input();
