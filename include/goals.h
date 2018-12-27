@@ -60,19 +60,23 @@ class GoalContainer {
 
 	std::set<int> active;	// contains indices of v which are not deleted. Used as base for search
 	std::map<std::string,int> names; // goal labels must be unique, facilitating enforcement
-//	std::set<int> searchRes; // active indices of v which are included in search results. Used as
+	std::set<int> searchRes; // active indices of v which are included in search results. Used as
 				 // base for 'sorted' initialisation. 
 
 	std::vector<int> sorted;// will contain the proper order of v's indices when sorted
 	int sortver;
+	int searchver;
 	bool refreshSort; //any modification will raise this flag to signify need to refresh ordering.
+	bool refreshSearch; // re-run search after an update to search criteria
  public:
-	GoalContainer():modifiedGoals{false},sortver{-1},refreshSort{true} {}
+	GoalContainer():modifiedGoals{false},sortver{-1},searchver{-1},refreshSort{true},refreshSearch{true} {}
 
 	void printRecord( std::ostream &strm, int id ) { v[sorted[id]].print(strm);}
 	int printAll( std::ostream &strm,int first=0,int maxToPrint=1000) const;
 
 	size_t size() { return v.size(); }
+	size_t activesize() { return active.size();}
+	size_t searchsize() { return searchRes.size();}
 
 	bool isModified() { return modifiedGoals; }
 
@@ -90,9 +94,10 @@ class GoalContainer {
 
 	int findNameIndex( const std::string& name ) const;
 
-
+	bool matchGoal( int idx );
+	bool matchGoal( int idx, const Goal& searchCriteria); // used for searching repeated records
 	void sortGoals();
-	//void searchNames( const std::string rexp );
+	void searchGoals();
 	friend class GoalComparator;
 
 #ifdef TESTING_ACTIVE
@@ -161,15 +166,19 @@ class UserOptions {
 	std::string sortPrefs;  // field-order pairs, in lowercase. used by comparator object
 	std::string filename;
 	int sortingver;// will increase to indicate a new sorting string set.
+	Goal searchCriteria;
+	int searchver;
 	
 	//private constructor, singleton
-	UserOptions():verbosity{true},paging{false},showNumbers{false},sortPrefs{""},sortingver{0} {} 
+	UserOptions():verbosity{true},paging{false},showNumbers{false},sortPrefs{""},sortingver{0},
+	       		searchCriteria{"",-1,-1,-1.},searchver{0}	{} 
 public:
 	static UserOptions& getInstance() { 
 		static UserOptions userOptions; // the first and only instance created.
 		return userOptions;
 	}
 	int getSortingVer() { return sortingver;} // enabling goalcontainers to update sorting order 
+	int getSearchVer() { return searchver;}
 
 	UserOptions( UserOptions &a) 	= delete;// copy constructor
 	UserOptions( UserOptions &&a) 	= delete;// move constructor
@@ -186,11 +195,13 @@ public:
 
 	bool validateString( std::string candidatePrefs );
 	std::string getSortPrefs() const {return sortPrefs;}
+	Goal getSearchCriteria() const {return searchCriteria;}
 
 	void setVerbosity( bool newvalue ) { verbosity = newvalue; }
 	void setPaging( bool newvalue ) { paging = newvalue; }
 	void setShowNum( bool newvalue ) { showNumbers = newvalue; }
 	void setSortPrefs(std::string newPrefs);
+	void setSearchCriteria( Goal newCriteria);//copy is preferrable here. may alter invalid values
 	
 	friend class GoalComparator;// to avoid 3 function calls for every iteration of the comparator
 };

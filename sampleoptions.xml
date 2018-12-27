@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <options>
 	<verbosity>false</verbosity>
-	<paging>true</paging>
-	<numbers>true</numbers>
-	<sort>uacd</sort>
+	<paging>false</paging>
+	<numbers>false</numbers>
+	<sort></sort>
 </options>

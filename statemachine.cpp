@@ -71,8 +71,23 @@ void MainMenu::display() {
 
 int MainMenu::showGoals(int firstRecord) {
 	prevShown = firstRecord;
+	Goal searchCriteria=UserOptions::getInstance().getSearchCriteria();
 	std::cout<<"GOALS:";
-	std::cout<<std::setfill(' ')<<std::setw(73)<<"["+UserOptions::getInstance().getSortPrefs()+"]"<<'\n';
+	std::cout<<std::setfill(' ')<<std::setw(30)<<"\t[ File: "<<StateMachine::getInstance().getGC().size()<<" ]";
+	std::cout<<" [ Current: "<<StateMachine::getInstance().getGC().activesize()<<" ]";
+	std::cout<<" [ Search: "<<StateMachine::getInstance().getGC().searchsize()<<" ]\n";
+	std::cout<<std::setfill(' ')<<std::setw(40)<<'['+searchCriteria.name+']';
+	if (searchCriteria.priority>-1)
+		std::cout<<'['<<std::setfill(' ')<<std::setw(3)<<searchCriteria.priority<<']';
+	else std::cout<<"[ - ]";
+	if (searchCriteria.completion>-1)
+		std::cout<<'['<<std::setfill(' ')<<std::setw(3)<<searchCriteria.completion<<']';
+	else std::cout<<"[ - ]";
+	if (searchCriteria.unitcost>-1.)
+		std::cout<<'['<<std::setfill(' ')<<std::setw(7)<<searchCriteria.unitcost<<']';
+	else std::cout<<"[  -  ]";
+
+	std::cout<<std::setfill(' ')<<std::setw(10)<<'['+UserOptions::getInstance().getSortPrefs()+']'<<'\n';
 	std::cout<<std::setfill('=')<<std::setw(80)<<"\n";
 	if (UserOptions::getInstance().getShowNum())
 		std::cout<<std::setfill(' ')<<std::setw(5)<<"# ";

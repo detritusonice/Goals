@@ -305,15 +305,25 @@ TEST( StateMachine, autoPop ) {
 }
 
 TEST( UserOptions, saveLoadOptions ) {
+	UserOptions::getInstance().loadFile("sampleoptions.xml");	//to set the filename
+	UserOptions::getInstance().setPaging(false);			//resetting values, file might be edited
+	UserOptions::getInstance().setShowNum(false);
+	UserOptions::getInstance().setSortPrefs(""); // reset static Options to default (side-effect)
+	UserOptions::getInstance().writeFile();		//ready to go.
+
+	std::string sortprefs("na"); 
+	UserOptions::getInstance().setSortPrefs( sortprefs );
 	int ver=UserOptions::getInstance().getSortingVer();
+
 	UserOptions::getInstance().loadFile("sampleoptions.xml");	
-	ASSERT_EQ( UserOptions::getInstance().getSortingVer(),ver+1);// loadFile uses setSortPrefs once
+	ver+=(int)(sortprefs!=UserOptions::getInstance().getSortPrefs());
+	ASSERT_EQ( UserOptions::getInstance().getSortingVer(),ver);// loadFile uses setSortPrefs once
 
 	UserOptions::getInstance().setVerbosity(false);
 	UserOptions::getInstance().setPaging(true);
 	UserOptions::getInstance().setShowNum(true);
 	UserOptions::getInstance().setSortPrefs("uacd");
-	ASSERT_EQ( UserOptions::getInstance().getSortingVer(),ver+2);// following explicit call
+	ASSERT_EQ( UserOptions::getInstance().getSortingVer(),ver+1);// following explicit call
 
 	UserOptions::getInstance().writeFile();
 
@@ -322,12 +332,13 @@ TEST( UserOptions, saveLoadOptions ) {
 	ASSERT_EQ( UserOptions::getInstance().getPaging(),true);
 	ASSERT_EQ( UserOptions::getInstance().getShowNum(),true);
 	ASSERT_EQ( UserOptions::getInstance().getSortPrefs(),"uacd");
-	ASSERT_EQ( UserOptions::getInstance().getSortingVer(),ver+3); // one more indirect setSortPrefs
+	ASSERT_EQ( UserOptions::getInstance().getSortingVer(),ver+1); // load had no effect, same sorting string 
 
 
 	UserOptions::getInstance().setPaging(false);
 	UserOptions::getInstance().setShowNum(false);
 	UserOptions::getInstance().setSortPrefs(""); // reset static Options to default (side-effect)
+	UserOptions::getInstance().writeFile();
 }
 
 int main(int argc, char **argv) {

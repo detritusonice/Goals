@@ -13,7 +13,7 @@ int main( int argc, char** argv) {
 	try{
 		int res= StateMachine::getInstance().run();
 		return res;
-	}catch( std::exception &e) {
+	} catch( std::exception &e) {
 		std::cerr<<"Exception caught:"<<e.what()<<"\n";
 	}
 	return 0;

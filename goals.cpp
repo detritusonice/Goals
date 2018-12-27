@@ -32,11 +32,14 @@ int GoalContainer::printAll(std::ostream& strm,int first, int maxToPrint) const 
 //
 void GoalContainer::insertGoal( const Goal& goal ) {
 	if (goal.name.empty()) return;    // name is mandatory
-	auto res=names.insert(std::make_pair(goal.name,(int)v.size())); // add to names set, if not already in
+	auto res=names.insert(std::make_pair(goal.name,(int)v.size())); //add to names set, if not already in
 
 	if ( res.first!=names.end() && res.second ) { // succeeded, not a duplicate
+		int idx=v.size();
 		v.push_back(goal);	//unique records, keep initial order
-		active.insert( active.end(),active.size()); //hint insert at the end
+		active.insert( active.end(),idx); //hint insert at the end
+		if (matchGoal(idx))
+			searchRes.insert(searchRes.end(),idx);//only records matching the search are visible
 	}
 	modifiedGoals=true;	
 	refreshSort=true; // signify re-sorting is in order
@@ -49,6 +52,7 @@ int GoalContainer::loadFile( const std::string &name) {
 	v.clear();
 	active.clear();
 	names.clear();
+	searchRes.clear();
 
 	filename= name;//store the filename of the container's records for saving
 	try {
@@ -143,6 +147,39 @@ void GoalContainer::writeGoal( XMLWriter& writer, const Goal& goal) {
 	writer.closeLabel();// goal
 }
 
+// Filters v's goal records based on user's search criteria
+void GoalContainer::searchGoals() {
+	if (!refreshSearch && searchver == UserOptions::getInstance().getSearchVer())//no need to re-search
+		return;
+	searchRes.clear();
+	for (auto idx:active)//always load from active to exclude deleted records
+		if (matchGoal(idx))
+			searchRes.insert(searchRes.end(),idx);//hint
+	searchver=UserOptions::getInstance().getSearchVer();
+	refreshSearch=false;
+}	
+
+bool GoalContainer::matchGoal( int gidx ) {
+	return matchGoal(gidx, UserOptions::getInstance().getSearchCriteria());
+}
+
+bool GoalContainer::matchGoal( int gidx, const Goal& searchCriteria ) {
+	bool matched=true;
+	if (!searchCriteria.name.empty()) {
+		std::regex re(searchCriteria.name);
+		matched=std::regex_search(v[gidx].name,re);//search for regular expression
+	}
+	if (searchCriteria.priority!=-1)
+		matched &= ( v[gidx].priority ==searchCriteria.priority);
+
+	if (searchCriteria.completion!=-1)
+		matched &= ( v[gidx].completion ==searchCriteria.completion);
+
+	if (searchCriteria.unitcost>-1.)
+		matched &= (v[gidx].unitcost == searchCriteria.unitcost);
+	return matched;
+}
+
 // Estblishes the new order of v's indices based on the new sorting string
 // by utilizing a recursive comparator
 // Note: may be called after an insert or deletion so re-creating the sorted vector is necessary
@@ -152,7 +189,7 @@ void GoalContainer::sortGoals() {
 		return;
 	sorted.clear();		//will contains the sequence of indices of live goals in v, 
 				//when properly ordered
-	for (int idx:active) 
+	for (int idx:searchRes) 
 		sorted.push_back(idx);
 	GoalComparator comp{this}; // build a comparator object to act on this container
 	std::sort(sorted.begin(),sorted.end(),comp);
@@ -175,7 +212,7 @@ bool GoalContainer::deleteRecord( int recordID ) {
 		return false;
 	}
 	names.erase(v[globalID].name);		// remove goal name from used name set
-	//searchRes.erase(globalID);		// remove from search results
+	searchRes.erase(globalID);		// remove from search results
 	sorted.erase(sorted.begin()+recordID);// removing the record will not necessitate a new sorting
 						// dependend records should be reloaded, but is wasteful.
 	modifiedGoals=true;			//changes made, should ask about saving on exit 
@@ -194,6 +231,8 @@ bool GoalContainer::modifyRecord( int recordID, const Goal& newvals ) {
 	v[globalID]=newvals;		// change the goal record
 	if (idx<0)
 		names.insert(make_pair(newvals.name,globalID)); // re-insert into names map
+	if (!matchGoal(globalID))
+		searchRes.erase(globalID);//remove from search results, if no longer matching
 	refreshSort=true; 
 	modifiedGoals=true;
 	return true;
@@ -338,16 +377,31 @@ bool UserOptions::validateString( std::string candidatePrefs) {
 	return true;
 }
 
-// sets new sort string in lowercase chars, then sorts the goal records
+// sets new sort string in lowercase chars, then signals that new sorting is needed for the goal records
 // Prerequisites: sorting string must be valid.
-// 		  the new string is presumably checked to be different than the previous one
 
 void UserOptions::setSortPrefs(std::string newPrefs) {
 	for(auto &c:newPrefs)
 		c=std::tolower(c);// must be lowercase to avoid unnecessary complexity
+	if (newPrefs==sortPrefs) return;
+
 	if (validateString(newPrefs)) {
 		sortPrefs=newPrefs; // string must be valid
 		sortingver++; // indicate that re-sorting will be necessary
 	}
 }
 
+//called by the options search menu. checks and sets new values to the search criteria
+
+void UserOptions::setSearchCriteria( Goal newCriteria) {
+	if (newCriteria.priority<0 || newCriteria.priority>100)
+		newCriteria.priority=-1;
+	if (newCriteria.completion<0 || newCriteria.completion>100)
+		newCriteria.completion=-1;
+	if (newCriteria.unitcost<0.00000001)
+		newCriteria.unitcost=-1.;
+	if (newCriteria == searchCriteria)
+		return;
+	searchCriteria=newCriteria;
+	searchver++;
+}
