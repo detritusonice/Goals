@@ -57,12 +57,12 @@ void MainMenu::display() {
 		refresh=false;
 	}
 	if ( UserOptions::getInstance().getVerbosity() ) {
-		std::cout<<"e(xit), o(ptions), r(efresh), s(ort), d(elete), i(nsert), m(odify)";
+		std::cout<<"e(xit), o(ptions), r(efresh), s(ort), d(elete), i(nsert), m(odify), f(ilter)";
 		if (nextToShow>0)
 			std::cout<<",n(ext)";
 	}
 	else {
-		std::cout<<"e,q,o,r,s,d,i,m";
+		std::cout<<"e,q,o,r,s,d,i,m,f";
 		if (nextToShow>0)
 			std::cout<<",n";
 	}
@@ -133,6 +133,7 @@ void MainMenu::act() {
 			  }
 			  StateMachine::getInstance().setNextStateID(STATE_MODIFY);
 			  break; 
+		case 'f': StateMachine::getInstance().setNextStateID(STATE_SEARCH);break;
 		default: break;
 	}
 	c=char{0};
@@ -369,6 +370,54 @@ void InsertState::act() {
         }
 }
 //-----------------------------------------------------------------------------
+// display search banner
+void SearchState::display() {
+	if (state==STATE_INPUT) {
+		std::cout<<"Currently selected filters:\n";
+		modGoal.goal.print(std::cout);
+		std::cout<<"e(dit), r(eset), (b)ack :\n";
+	}
+}
+
+void SearchState::input() {
+	if (state==STATE_INPUT) {
+		char c;
+		std::cin >>c;
+		c=tolower(c);
+		switch (c) {
+			case 'b':state=STATE_DONE;break;
+			case 'r':state=STATE_RESET;break;
+			case 'e':state=STATE_EDIT;break;
+			default: state=STATE_INPUT;break;
+		} 
+	}
+}
+
+// handle control of goal record editing to ModifyState, act appropriately upon return
+void SearchState::act() {
+		switch(state) {
+		case STATE_RESET: modGoal.goal=Goal("",-1,-1,-1.);
+				  modGoal.modified=true;
+				  modGoal.validated=true;
+				  std::cout<<"All filters removed.\n";
+				  state=STATE_INPUT;
+				  break;
+
+		case STATE_EDIT:  state=STATE_DONE;
+			  	  StateMachine::getInstance().setNextStateID( STATE_EDITOR );
+				  break;
+
+		case STATE_DONE:  if (modGoal.validated) {
+					  UserOptions::getInstance().setSearchCriteria(modGoal.goal); 
+				  	  std::cout<<"New filter values set.\n";
+				  }
+				  StateMachine::getInstance().setNextStateID( STATE_MAINMENU );
+				  break;
+
+		default:	  break;
+	}
+}
+//-----------------------------------------------------------------------------
 
 void EditorState::setPrevState( State* prev ) {
 	State::setPrevState(prev); //preserve base functionality
@@ -380,11 +429,20 @@ void EditorState::setPrevState( State* prev ) {
 void EditorState::display() {
 	switch (editState) {
 		case EDITOR_INTRO:
-       			if (tmpModGoal.mode==ModGoal::MODE_INSERT)
-			       std::cout<<"New record. Please enter field values:";
-			else {
-				std::cout<<"Editing goal record:\n";
-				modGoalPtr->goal.print(std::cout);
+			switch (tmpModGoal.mode) {
+				case ModGoal::MODE_INSERT:
+			       		std::cout<<"New record. Please enter field values:";
+					break;
+				case ModGoal::MODE_EDIT: 
+					std::cout<<"Editing goal record:\n";
+					modGoalPtr->goal.print(std::cout);
+				case ModGoal::MODE_SEARCH:
+					std::cout<<"Search criteria are ";
+					if (modGoalPtr->goal==Goal("",-1,-1,-1.))
+						std::cout<<"disabled.";
+					else 
+						std::cout<<modGoalPtr->goal;
+					std::cout<<"\n";
 			}
 			break;
 		case EDITOR_FIELDCHOICE:
@@ -397,7 +455,7 @@ void EditorState::display() {
 				modGoalPtr->goal.print(std::cout);
 			}
 			//show current values and ask if user wants to commit changes	
-			std::cout<<" New record values:\n";
+			std::cout<<" New values:\n";
 			tmpModGoal.goal.print(std::cout);
 			std::cout<<"\n COMMIT CHANGES(y,n)?";	
 			break;
@@ -444,15 +502,20 @@ void EditorState::act() {
 			{
 				std::string name=getName(); //if user enters same name as existing, nothing happens
 				bool ok=true;
-				if (name!=modGoalPtr->goal.name) {
-					int idx=StateMachine::getInstance().getGC().findNameIndex(name);
-					if ( idx != tmpModGoal.idx && idx>0) {
-						std::cout<<"A goal record with that name exists. Enter unique name.\n";
-						ok=false;
-					}
-					else 
-						tmpModGoal.modified=true; //a new record or a modified existing one
+				if (tmpModGoal.mode!=ModGoal::MODE_SEARCH) {
+					if (name!=modGoalPtr->goal.name) {
+						int idx=StateMachine::getInstance().getGC().findNameIndex(name);
+						if ( idx != tmpModGoal.idx && idx>0) {
+							std::cout<<"A goal record with that name exists. Enter unique name.\n";
+							ok=false;
+						}
+						else 
+							tmpModGoal.modified=true; //a new record or a modified existing one
+					} 
 				}
+				else if (name!=modGoalPtr->goal.name)
+					tmpModGoal.modified=true;// any change will do.
+
 				if (ok) {
 					tmpModGoal.goal.name=name;
 					editState= ( (tmpModGoal.mode==ModGoal::MODE_INSERT)?EDITOR_PRIORITY:EDITOR_FIELDCHOICE ); 
@@ -497,45 +560,74 @@ void EditorState::act() {
 
 std::string EditorState::getName() {
 	std::string name;
-	while (name.empty()) {
-		if (tmpModGoal.mode!=ModGoal::MODE_INSERT)
-			std::cout<<"Name was: "<<tmpModGoal.goal.name<<'\n';
-		std::cout<<"Name (non-empty): ";
+	if (tmpModGoal.mode==ModGoal::MODE_SEARCH) {
+		std::cin.get();
+		std::cout<<"Name filter was:["<<tmpModGoal.goal.name<<"]\n";
+		std::cout<<"New filter (regex):";
 		std::getline(std::cin,name);
-	} 
+	}
+	else {
+		while (name.empty()) {
+			if (tmpModGoal.mode!=ModGoal::MODE_INSERT)
+				std::cout<<"Name was: "<<tmpModGoal.goal.name<<'\n';
+			std::cout<<"Name (non-empty): ";
+			std::getline(std::cin,name);
+		}
+	}	
 	return name;
 }
 
 int EditorState::getPriority() {
 	int priority=-1;
-	while (priority<0 || priority>100) {
-		if (tmpModGoal.mode!=ModGoal::MODE_INSERT)
-			std::cout<<"Priority was: "<<tmpModGoal.goal.priority<<'\n';
-		std::cout<<"Priority [0-100]: ";
+	if (tmpModGoal.mode==ModGoal::MODE_SEARCH) {
+		std::cout<<"Priority filter was:["<<tmpModGoal.goal.priority<<"]\n";
+		std::cout<<"New filter (-1 to disable):";
 		std::cin>>priority;
-	} 
+	}
+	else {
+		while (priority<0 || priority>100) {
+			if (tmpModGoal.mode!=ModGoal::MODE_INSERT)
+				std::cout<<"Priority was: "<<tmpModGoal.goal.priority<<'\n';
+			std::cout<<"Priority [0-100]: ";
+			std::cin>>priority;
+		}
+	}	
 	return priority;
 }
 
 int EditorState::getCompletion() {
 	int completion=-1;
-	while ( completion<0 || completion>100) {
-		if (tmpModGoal.mode!=ModGoal::MODE_INSERT)
-			std::cout<<"Completion % was: "<<tmpModGoal.goal.completion<<'\n';
-		std::cout<<"% completed [0-100]: ";
+	if (tmpModGoal.mode==ModGoal::MODE_SEARCH) {
+		std::cout<<"Completion filter was:["<<tmpModGoal.goal.completion<<"]\n";
+		std::cout<<"New filter (-1 to disable):";
 		std::cin>>completion;
-	} 
+	}
+	else {
+		while ( completion<0 || completion>100) {
+			if (tmpModGoal.mode!=ModGoal::MODE_INSERT)
+				std::cout<<"Completion % was: "<<tmpModGoal.goal.completion<<'\n';
+			std::cout<<"% completed [0-100]: ";
+			std::cin>>completion;
+		}
+	}	
 	return completion;
 }
 
 double EditorState::getUnitCost() {
 	double unitcost=0.;
-	while ( unitcost<0.00001) {
-		if (tmpModGoal.mode!=ModGoal::MODE_INSERT)
-			std::cout<<"Time cost was: "<<tmpModGoal.goal.unitcost<<'\n';
-		std::cout<<"Time cost per 1% in hours (positive float) : ";
+	if (tmpModGoal.mode==ModGoal::MODE_SEARCH) {
+		std::cout<<"UnitCost filter was:["<<tmpModGoal.goal.unitcost<<"]\n";
+		std::cout<<"New filter (<0. to disable):";
 		std::cin>>unitcost;
-	} 
+	}
+	else {
+		while ( unitcost<0.00001) {
+			if (tmpModGoal.mode!=ModGoal::MODE_INSERT)
+				std::cout<<"Time cost was: "<<tmpModGoal.goal.unitcost<<'\n';
+			std::cout<<"Time cost per 1% in hours (positive float) : ";
+			std::cin>>unitcost;
+		}
+	}
 	return unitcost;
 }
 //--------------------------------------------------------------------------------
@@ -560,6 +652,7 @@ void StateMachine::setState( STATE newStateID ) {
 		case STATE_DELETE: newstate= new DeleteState{};break;
 		case STATE_INSERT: newstate= new InsertState{};break;
 		case STATE_MODIFY: newstate= new ModifyState{};break;
+		case STATE_SEARCH: newstate= new SearchState{};break;
 		case STATE_EDITOR: newstate= new EditorState{};break;
 		default:break;
 	}
@@ -610,6 +703,7 @@ int StateMachine::run() {
 
 		if (UserOptions::getInstance().getPaging())
 			queryConsoleDimensions();
+		gc.searchGoals(); // only if flagged so
 		gc.sortGoals(); // will sort only when the sorting preference string has been changed
 		//std::cerr<<"Terminal Dimensions: "<<termHeight()<<" rows x "<<termWidth()<<" columns\n";
 

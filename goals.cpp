@@ -157,6 +157,7 @@ void GoalContainer::searchGoals() {
 			searchRes.insert(searchRes.end(),idx);//hint
 	searchver=UserOptions::getInstance().getSearchVer();
 	refreshSearch=false;
+	refreshSort=true;//since we updated search results, we need to update the presented records
 }	
 
 bool GoalContainer::matchGoal( int gidx ) {
