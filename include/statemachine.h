@@ -22,6 +22,7 @@ enum STATE {
 	STATE_DELETE,
 	STATE_INSERT,
 	STATE_MODIFY,
+	STATE_SEARCH,
 	STATE_EDITOR,
 	STATE_INVALID
 };
@@ -173,6 +174,26 @@ class ModifyState: public GoalEditingState {
         void display();
 	void input();
         void act();
+};
+//============================================================================
+class SearchState: public GoalEditingState {
+
+	enum SEARCH_STATE {
+		STATE_INPUT,
+		STATE_RESET,
+		STATE_EDIT, 
+		STATE_DONE
+	} state;
+	
+public:
+	SearchState():GoalEditingState{STATE_SEARCH},state{STATE_INPUT} {
+		modGoal.goal = UserOptions::getInstance().getSearchCriteria();
+		modGoal.mode = ModGoal::MODE_SEARCH;
+	}
+
+	void display();
+	void input();
+	void act();
 };
 //============================================================================
 class EditorState: public State {
