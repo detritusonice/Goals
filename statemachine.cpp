@@ -373,8 +373,8 @@ void InsertState::act() {
 // display search banner
 void SearchState::display() {
 	if (state==STATE_INPUT) {
-		std::cout<<"Currently selected filters:\n";
-		modGoal.goal.print(std::cout);
+		std::cout<<"Current filters: \t\t["<<modGoal.goal.name<<"], ["<<modGoal.goal.priority<<"], ";
+		std::cout<<"["<<modGoal.goal.completion<<"], ["<<modGoal.goal.unitcost<<"]\n";
 		std::cout<<"e(dit), r(eset), (b)ack :\n";
 	}
 }
@@ -440,8 +440,13 @@ void EditorState::display() {
 					std::cout<<"Search criteria are ";
 					if (modGoalPtr->goal==Goal("",-1,-1,-1.))
 						std::cout<<"disabled.";
-					else 
-						std::cout<<modGoalPtr->goal;
+					else { 
+
+						std::cout<<"\t\t["<<modGoalPtr->goal.name<<"], [";
+						std::cout<<modGoalPtr->goal.priority<<"], ";
+						std::cout<<"["<<modGoalPtr->goal.completion<<"], [";
+						std::cout<<modGoalPtr->goal.unitcost<<"]";
+					}
 					std::cout<<"\n";
 			}
 			break;

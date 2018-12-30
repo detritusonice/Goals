@@ -1,15 +1,15 @@
 IT = implement and test to 100%
 
 IT MainMenu:
-	Show record number before goal record.
-	ConfigOptions: Option to show record numbers in main menu.
+	Show record number before goal record. DONE
+	ConfigOptions: Option to show record numbers in main menu. DONE
 
 IT Delete option			DONE
 	Delete record by record ID.	DONE
 
 IT Insert option
 	IT user inserts the fields, reviews and accepts, rejects, 
-		or selects field for modification, until acceptance or rejection.
+		or selects field for modification, until acceptance or rejection. DONE
 	uses Editor state		DONE
 
 IT Modify option
@@ -20,15 +20,13 @@ IT Editor state
 
 
 IT Search option
-	by field, one at a time as search criterion, by entering a substring of name, of
-		an exact number for numeric fields
-	OR
-	by sort order ID, e.g. the 3d record as they are displayed.
+	in any combination of field search criteria, by entering a regex for name, or
+		an exact number for any used numeric fields 		DONE
 
 IT GoalContainer:
 	Sort should have effect on the displayed records, either full file list
-		or search results.
-	Option in main menu to abandon search results and reset display
+		or search results.					DONE
+	Option in main menu to abandon search results and reset display  *DONE
 
 IT Statemachine should be a singleton with a reset() option.	DONE
 

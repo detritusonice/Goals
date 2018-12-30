@@ -170,13 +170,13 @@ bool GoalContainer::matchGoal( int gidx, const Goal& searchCriteria ) {
 		std::regex re(searchCriteria.name);
 		matched=std::regex_search(v[gidx].name,re);//search for regular expression
 	}
-	if (searchCriteria.priority!=-1)
+	if (matched && searchCriteria.priority!=-1)
 		matched &= ( v[gidx].priority ==searchCriteria.priority);
 
-	if (searchCriteria.completion!=-1)
+	if (matched && searchCriteria.completion!=-1)
 		matched &= ( v[gidx].completion ==searchCriteria.completion);
 
-	if (searchCriteria.unitcost>-1.)
+	if (matched && searchCriteria.unitcost>-1.)
 		matched &= (v[gidx].unitcost == searchCriteria.unitcost);
 	return matched;
 }
@@ -188,11 +188,12 @@ bool GoalContainer::matchGoal( int gidx, const Goal& searchCriteria ) {
 void GoalContainer::sortGoals() {
 	if ( !refreshSort  &&  sortver==UserOptions::getInstance().getSortingVer())//no reordering needed
 		return;
-	sorted.clear();		//will contains the sequence of indices of live goals in v, 
-				//when properly ordered
+	sorted.clear();		//will contains the sequence of indices of live goals in v, post filtering
+				//when properly ordered based on user's sorting criteria
 	for (int idx:searchRes) 
 		sorted.push_back(idx);
 	GoalComparator comp{this}; // build a comparator object to act on this container
+
 	std::sort(sorted.begin(),sorted.end(),comp);
 	sortver=UserOptions::getInstance().getSortingVer();
 	refreshSort=false;
@@ -213,7 +214,7 @@ bool GoalContainer::deleteRecord( int recordID ) {
 		return false;
 	}
 	names.erase(v[globalID].name);		// remove goal name from used name set
-	searchRes.erase(globalID);		// remove from search results
+	searchRes.erase(globalID);		// remove from search results, no update necessary
 	sorted.erase(sorted.begin()+recordID);// removing the record will not necessitate a new sorting
 						// dependend records should be reloaded, but is wasteful.
 	modifiedGoals=true;			//changes made, should ask about saving on exit 
@@ -248,7 +249,8 @@ int GoalContainer::getGoalByRecordID( int recordID , Goal& copy) {
 	}
 	return -1;
 }
-	
+
+//returns the index of the name in v if found, -1 if not	
 int GoalContainer::findNameIndex( const std::string& name ) const{
 	auto res=names.find(name);
 	if (res !=names.end())
@@ -404,5 +406,5 @@ void UserOptions::setSearchCriteria( Goal newCriteria) {
 	if (newCriteria == searchCriteria)
 		return;
 	searchCriteria=newCriteria;
-	searchver++;
+	searchver++; // like sorting, indicate need to refresh search results
 }

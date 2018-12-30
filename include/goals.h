@@ -96,8 +96,10 @@ class GoalContainer {
 
 	bool matchGoal( int idx );
 	bool matchGoal( int idx, const Goal& searchCriteria); // used for searching repeated records
+
 	void sortGoals();
 	void searchGoals();
+
 	friend class GoalComparator;
 
 #ifdef TESTING_ACTIVE
